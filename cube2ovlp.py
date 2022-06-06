@@ -83,9 +83,9 @@ def cal_ovlp_mo(file1, file2, trans=None, rot=None):               # currently t
 
     return ovlp
 
-trans = [0,0,3.5]
-cube_file1 = './overlap-1d/homo-xyz.dat'
-cube_file2 = './overlap-1d/homo-xyz.dat'
-ovlp=cal_ovlp_mo(cube_file1, cube_file2, trans)
+# trans = [0,0,3.5]
+# cube_file1 = './overlap-1d/homo-xyz.dat'
+# cube_file2 = './overlap-1d/homo-xyz.dat'
+# ovlp=cal_ovlp_mo(cube_file1, cube_file2, trans)
 
-print(ovlp)
+# print(ovlp)
