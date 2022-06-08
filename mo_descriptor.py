@@ -28,7 +28,7 @@ def get_center_(mo_):
     for ii, i in np.ndenumerate(icoord):
         for j in range(0, len(icoord)):
             sum_qv[j] += i[j] * values[ii]
-            sum_v[j] += i
+            sum_v[j] += values[ii]
 
     for k in range(0, len(sum_v)):
         qc[k] = sum_qv[k] / sum_v[k]
@@ -39,11 +39,11 @@ def get_cluster(imo):
     '''mo_ is a 2-d array, [(ix,iy,iz), v], including the indices and the corresponding values
        nq is the size of mo tensor
     '''
-    return get_dbscan_cluster(imo)
+    return get_dbscan_cluster(mo)
 
-def get_dbscan_cluster(imo_):
+def get_dbscan_cluster(mo_):
     from sklearn.cluster import DBSCAN
-    icluster = DBSCAN(eps=1, min_samples=5).fit_predict(imo_) #  eps=1, min_samples=5 have been tested 6/6/2022
+    icluster = DBSCAN(eps=1, min_samples=5).fit_predict(mo_) #  eps=1, min_samples=5 have been tested 6/6/2022
 
     n_cluster = len(np.unique(icluster))
     if n_cluster == 1:
@@ -78,21 +78,23 @@ def preprocess_mo(mo, thresh=1e-5):
 
 def make_mo_descriptor(cube_file): # dat file is also supported
     '''
-    mo_plus, mo_minus:                   n_grids * n_dim array
+    mo:                                  nx * ny * nz, number of grids along each axis
+    imo_plus, imo_minus:                   n_grids * n_dim array, indices of mo
     n_cluster:                           int
     icluster_plus, icluster_minus:       1 * n_grids array
-    cluster_plus, cluster_minus:         n_cluster * 1 array
+    cluster_plus, cluster_minus:         n_cluster * n_grids_cluster_ array, n_grids_cluster is not a fixed number
+    cneter_plus, center_minus:           n_cluster * n_dim
     '''
     # load mo form cube file and preprocess it to positive and negative part
     if cube_file.split('.')[-1] == 'cube':
         nq, dq, mo = load_cube(cube_file)
     elif cube_file.split('.')[-1] == 'dat':
         nq, dq, mo = load_dat(cube_file)
-    mo_plus, mo_minus = preprocess_mo(mo) # 
+    imo_plus, imo_minus = preprocess_mo(mo)  
 
     # clustering
-    n_cluster_plus, icluster_plus = get_cluster(mo_plus)
-    n_cluster_minus, icluster_minus = get_cluster(mo_minus)
+    n_cluster_plus, icluster_plus = get_cluster(imo_plus)
+    n_cluster_minus, icluster_minus = get_cluster(imo_minus)
 
     # match the clustered index to the values
     cluster_plus= []
@@ -101,14 +103,14 @@ def make_mo_descriptor(cube_file): # dat file is also supported
         cluster = []
         for jj, j in enumerate(icluster_plus):
             if j == i:
-                cluster.append(mo_plus[jj])
+                cluster.append(mo[imo_plus[jj]])
         cluster_plus.append(cluster)
 
     for i in range(0, n_cluster_minus):
         cluster = []
         for jj, j in enumerate(icluster_minus):
             if j == i:
-                cluster.append(mo_minus[jj])
+                cluster.append(mo[imo_minus[jj]])
         cluster_minus.append(cluster)
 
     # get the center of each cluster
@@ -120,7 +122,7 @@ def make_mo_descriptor(cube_file): # dat file is also supported
     for i in range(0, n_cluster_minus):
         center_minus.append(get_center_(cluster_minus[i]))
         
-    # integrate value on all grids of each cluster
+    # integrate values on all grids of each cluster
     int_plus = int_grids_cluster(cluster_plus)
     int_minus = int_grids_cluster(cluster_minus)
 
