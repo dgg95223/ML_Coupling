@@ -34,14 +34,15 @@ class MO_descriptor():
             iy = icoord[i][1]
             iz = icoord[i][2]
             values[i] = mo[ix,iy,iz]
-        print(np.array(icoord).shape)
+        print(icoord[0])
 
         sum_qv = np.zeros(len(icoord[0]))
-        sum_v = np.zeros(len(icoord[0]))
-        qc = np.zeros(len(icoord[0]))
+        sum_v  = np.zeros(len(icoord[0]))
+        qc     = np.zeros(len(icoord[0]))
 
         for ii, i in np.ndenumerate(icoord):
             for j in range(0, len(icoord)):
+                print(i)
                 sum_qv[j] += i[j] * values[ii]
                 sum_v[j] += values[ii]
 
