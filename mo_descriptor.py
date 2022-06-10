@@ -1,6 +1,4 @@
-from tokenize import cookie_re
 import numpy as np
-from sympy import interactive_traversal
 from cube2ovlp import load_cube, load_dat
 
 class MO_descriptor():
