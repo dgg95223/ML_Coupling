@@ -1,11 +1,13 @@
+from tokenize import cookie_re
 import numpy as np
 from cube2ovlp import load_cube, load_dat
 
 class MO_descriptor():
-    def __init__(self):
+    def __init__(self, cube_file):
         self.mo         = None
         self.imo_plus   = None
         self.imo_minus  = None
+        self.cube_file  = cube_file 
 
     def get_center(self, mo):
         '''return the indices of the center of the given matrix/tensor'''
@@ -28,8 +30,11 @@ class MO_descriptor():
         icoord = imo
         values = np.zeros(len(icoord))
         for i in range(0, len(icoord)):
-            print(icoord[i])
-            values[i] = mo[icoord[i][]]
+            ix = icoord[i][0]
+            iy = icoord[i][1]
+            iz = icoord[i][2]
+            values[i] = mo[ix,iy,iz]
+        print(np.array(icoord).shape)
 
         sum_qv = np.zeros(len(icoord[0]))
         sum_v = np.zeros(len(icoord[0]))
@@ -41,8 +46,9 @@ class MO_descriptor():
                 sum_v[j] += values[ii]
 
         for k in range(0, len(sum_v)):
-
             qc[k] = sum_qv[k] / sum_v[k]
+
+        
 
         return np.round(qc)
                     
@@ -91,7 +97,7 @@ class MO_descriptor():
 
         return np.array(positive), np.array(negative)  # [(ix,iy,iz)] : n * 3 array
 
-    def make_mo_descriptor(self, cube_file):
+    def make(self):
         '''
         mo:                                  nx * ny * nz, number of grids along each axis
         imo_plus, imo_minus:                 n_grids * n_dim array, indices of mo
@@ -101,6 +107,7 @@ class MO_descriptor():
         cneter_plus, center_minus:           n_cluster * n_dim, weighthed cneter of cluster
         '''
         # load mo form cube file and preprocess it to positive and negative part
+        cube_file = self.cube_file
         if cube_file.split('.')[-1] == 'cube':
             nq, dq, mo = load_cube(cube_file)
             
