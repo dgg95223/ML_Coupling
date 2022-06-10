@@ -1,5 +1,6 @@
 from tokenize import cookie_re
 import numpy as np
+from sympy import interactive_traversal
 from cube2ovlp import load_cube, load_dat
 
 class MO_descriptor():
@@ -28,28 +29,20 @@ class MO_descriptor():
         '''return the indices of the center of a list of indices of a maatrix/tensor and the correspending values
         mo_ should have the following form [[(ix, iy, iz), v]]'''
         icoord = imo
-        values = np.zeros(len(icoord))
-        for i in range(0, len(icoord)):
-            ix = icoord[i][0]
-            iy = icoord[i][1]
-            iz = icoord[i][2]
-            values[i] = mo[ix,iy,iz]
-        print(icoord[0])
+        values = mo
+        print('3',len(icoord))
 
         sum_qv = np.zeros(len(icoord[0]))
         sum_v  = np.zeros(len(icoord[0]))
         qc     = np.zeros(len(icoord[0]))
 
-        for ii, i in np.ndenumerate(icoord):
-            for j in range(0, len(icoord)):
-                print(i)
-                sum_qv[j] += i[j] * values[ii]
-                sum_v[j] += values[ii]
+        for i in icoord:
+            for j in range(0, len(icoord[0])):
+                sum_qv[j] += i[j] * values[i]
+                sum_v[j] += values[i]
 
         for k in range(0, len(sum_v)):
             qc[k] = sum_qv[k] / sum_v[k]
-
-        
 
         return np.round(qc)
                     
@@ -79,12 +72,16 @@ class MO_descriptor():
 
         return n_cluster, icluster
 
-    def int_grids_cluster(self, clusters):
-        int_values = []
-        for icluster, cluster in np.ndenumerate(clusters):
-            int_values.append(sum(cluster[:][1]))
+    def int_grids_cluster(self, imo, mo):
+        icoord = imo
         
-        return np.array(int_values)
+        n_cluster = len(imo)
+        int_values =  np.zeros(n_cluster)
+        for ii, i in np.ndenumerate(icoord):
+            for j in i:
+                int_values[ii] += mo[j]
+        
+        return int_values
 
     def preprocess_mo(self, mo, thresh=1e-5):
         '''separate the mo to 2 parts, positive part and negative part'''
@@ -96,7 +93,7 @@ class MO_descriptor():
             elif i < -thresh:
                 negative.append(ii)
 
-        return np.array(positive), np.array(negative)  # [(ix,iy,iz)] : n * 3 array
+        return positive, negative  # [(ix,iy,iz)] : n * 3 array
 
     def make(self):
         '''
@@ -154,7 +151,7 @@ class MO_descriptor():
             center_minus.append(self.get_center_(cluster_minus[i], mo))
             
         # integrate values on all grids of each cluster
-        int_plus = self.int_grids_cluster(cluster_plus)
-        int_minus = self.int_grids_cluster(cluster_minus)
+        int_plus = self.int_grids_cluster(cluster_plus, mo)
+        int_minus = self.int_grids_cluster(cluster_minus, mo)
         
-        return np.array((int_plus, int_minus)), np.array((center_plus, center_minus))
+        return (int_plus, int_minus), (center_plus, center_minus)
