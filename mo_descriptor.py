@@ -24,11 +24,9 @@ class MO_descriptor():
         return qc
 
     def get_center_(self, imo, mo):
-        '''return the indices of the center of a list of indices of a maatrix/tensor and the correspending values
-        mo_ should have the following form [[(ix, iy, iz), v]]'''
+        '''return the indices of the center of a list of indices of a maatrix/tensor'''
         icoord = imo
         values = mo
-        print('3',len(icoord))
 
         sum_qv = np.zeros(len(icoord[0]))
         sum_v  = np.zeros(len(icoord[0]))
@@ -43,11 +41,8 @@ class MO_descriptor():
             qc[k] = sum_qv[k] / sum_v[k]
 
         return np.round(qc)
-                    
+
     def get_cluster(self, imo): 
-        '''mo_ is a 2-d array, [(ix,iy,iz), v], including the indices and the corresponding values
-        nq is the size of mo tensor
-        '''
         return self.get_dbscan_cluster(imo)
 
     def get_dbscan_cluster(self, imo_):
@@ -126,8 +121,6 @@ class MO_descriptor():
                 if j == i:
                     cluster.append(imo_plus[jj])
             cluster_plus.append(cluster)
-        
-        print('1', np.array(cluster_plus[0]).shape)
 
         for i in range(0, n_cluster_minus):
             cluster = []
@@ -149,6 +142,7 @@ class MO_descriptor():
             center_minus.append(self.get_center_(cluster_minus[i], mo))
             
         # integrate values on all grids of each cluster
+        print('3')
         int_plus = self.int_grids_cluster(cluster_plus, mo)
         int_minus = self.int_grids_cluster(cluster_minus, mo)
         
