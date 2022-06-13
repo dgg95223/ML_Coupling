@@ -111,7 +111,6 @@ class MO_descriptor():
         print('1 start clustering')
         n_cluster_plus, icluster_plus = self.get_cluster(imo_plus)
         n_cluster_minus, icluster_minus =self.get_cluster(imo_minus)
-        print('1 dbscan finished')
 
         cluster_plus= []
         cluster_minus = []
@@ -129,8 +128,6 @@ class MO_descriptor():
                     cluster.append(imo_minus[jj])
             cluster_minus.append(cluster)
 
-        print('1', len(cluster_minus))
-
         # get the center of each cluster
         print('2 start getting center')
         center_plus = []
@@ -142,7 +139,6 @@ class MO_descriptor():
             center_minus.append(self.get_center_(cluster_minus[i], mo))
             
         # integrate values on all grids of each cluster
-        print('3')
         int_plus = self.int_grids_cluster(cluster_plus, mo)
         int_minus = self.int_grids_cluster(cluster_minus, mo)
         
