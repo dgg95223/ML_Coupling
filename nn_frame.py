@@ -2,7 +2,7 @@ import tensorflow as tf
 import json
 
 class NN(tf.keras.Model):
-    def __init__(self, nn_shape=(5,5,10), batch_size=(1024,10), activation='tanh'):
+    def __init__(self, activation='tanh'):
         super().__init__()
         # initial load
 
@@ -12,11 +12,13 @@ class NN(tf.keras.Model):
         elif activation == 'relu':
             self.activation = tf.nn.relu
 
+        if nn_shape is None:
+            nn_shape = (5)
+
         self.nn_shape = nn_shape
         self.batch_size = batch_size
-        self.flatten = tf.keras.layers.Reshape(target_shape=self.nn_shape)
-        self.dense1 = tf.keras.layers.Dense(units=self.batch_size[0], activation=self.activation)
-        self.dense2 = tf.keras.layers.Dense(units=self.batch_size[1])
+
+
 
         # initial train
 
@@ -27,8 +29,12 @@ class NN(tf.keras.Model):
         
         
 
-    def build_NN(self, inputs):
-        x = self.flatten(inputs)                     
+    def build_NN(self, data):
+        self.flatten = tf.keras.layers.Reshape(target_shape=self.nn_shape)
+        self.dense1 = tf.keras.layers.Dense(units=self.batch_size[0], activation=self.activation)
+        self.dense2 = tf.keras.layers.Dense(units=self.batch_size[1])
+
+        x = self.flatten(data)                     
         x = self.dense1(x)                      
         x = self.dense2(x)                      
         output = tf.nn.softmax(x)
