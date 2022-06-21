@@ -1,33 +1,50 @@
 import tensorflow as tf
+import numpy as np
 import json
 
-class NN(tf.keras.Model):
-    def __init__(self, activation='tanh'):
+class NN():
+    def __init__(self, json_path):
         super().__init__()
-        # initial load
+        setting = json.load(json_path)
+        self.setting = setting
+        setting_ = {'activation':'tanh', 'nn_shape':(5,10), 'batch_size':16, 'epoch':1, 'learning_rate': 0.001} # default setting
 
         # inital NN
-        if activation == 'tanh':
+        if self.setting['activation'] == 'tanh':
             self.activation = tf.nn.tanh
-        elif activation == 'relu':
+        elif self.setting['activation'] == 'relu':
             self.activation = tf.nn.relu
+        else:
+            print('The chosen activation function is not available.')
 
-        if nn_shape is None:
-            nn_shape = (5)
-
-        self.nn_shape = nn_shape
-        self.batch_size = batch_size
-
-
+        if setting['nn_shape'] is None:
+            self.nn_shape = setting_['nn_shape']
+        else:
+            self.nn_shape = setting['nn_shape']
 
         # initial train
+        if setting['learning_rate'] is None:
+            self.lr = setting_['learning_rate']
+        else:
+            self.lr = setting['learning_rate']
+
+        if setting['batch_siize'] is None:
+            self.batch_size = setting_['batch_size']
+        else:
+            self.batch_size = setting['batch_size']
+
+        if setting['epoch'] is None:
+            self.epoch = setting_['epoch']
+        else:
+            self.epoch = setting['epoch']
+
+        self.nbatch = self.ndata // self.batch_size
 
         # initial test
 
-    def build_data_set(self):
-        file_name = self.file_name
-        
-        
+    def build_data_set(self, X, Y):
+        data_set = tf.data.Dataset.from_tensor_slices((X,Y))
+        return data_set
 
     def build_NN(self, data):
         self.flatten = tf.keras.layers.Reshape(target_shape=self.nn_shape)
@@ -41,8 +58,8 @@ class NN(tf.keras.Model):
         return output
 
     def train(self):
-        model = self.call()
-        optimizer = tf.keras.optimizers.Adam(learning_rate=args.learning_rate)
+        self.model = self.build_NN()
+        optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr)
         num_batches = int(data_loader.num_train_data // args.batch_size * args.num_epochs)
         checkpoint = tf.train.Checkpoint(myAwesomeModel=model)      # 实例化Checkpoint，设置保存对象为model
         for batch_index in range(1, num_batches+1):                 
@@ -57,3 +74,8 @@ class NN(tf.keras.Model):
             if batch_index % 100 == 0:                              # 每隔100个Batch保存一次
                 path = checkpoint.save('./save/model.ckpt')         # 保存模型参数到文件
                 print("model saved to %s" % path)
+
+    def test(self):
+        self.model.evaluate(X,Y)
+
+
