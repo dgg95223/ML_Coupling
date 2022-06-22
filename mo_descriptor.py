@@ -6,7 +6,7 @@ class MO_descriptor():
         self.mo         = None
         self.imo_plus   = None
         self.imo_minus  = None
-        self.cube_file  = cube_file 
+        self.cube_file  = cube_file
 
     def get_center(self, mo):
         '''return the indices of the center of the given matrix/tensor'''
@@ -141,5 +141,31 @@ class MO_descriptor():
         # integrate values on all grids of each cluster
         int_plus = self.int_grids_cluster(cluster_plus, mo)
         int_minus = self.int_grids_cluster(cluster_minus, mo)
+
+        int, center = np.multiply((int_plus, int_minus),dq[0,0]**3), np.array((center_plus, center_minus))
+        mo_ = np.zeros((center.shape[1]*2, 4))
+        int = int.flatten()
+        center = center.reshape((center.shape[1]*2, 3))
+
+        for ii, i in enumerate(int):
+            mo_[ii] = np.append(int[ii], center[ii])
         
-        return (int_plus, int_minus), (center_plus, center_minus)
+        return mo_
+
+class MO_pair_descriptor():
+    def __init__(self, mo_des1, mo_des2):
+        self.mo1 = mo_des1
+        self.mo2 = mo_des2
+
+    def make(self):
+        mo1 = self.mo1
+        mo2 = self.mo2
+        mo_pair = np.zeros((4,)+mo1.shape)
+
+        for ii, i in enumerate(mo1):
+            mo_pair[ii,0] = mo1[ii,0] * mo2[ii,0]
+            mo_pair[ii,1:] = np.subtract(mo1[ii,1:], mo2[ii,1:])
+
+        return mo_pair
+
+
