@@ -4,10 +4,9 @@ import json
 
 class NN():
     def __init__(self, json_path):
-        super().__init__()
         setting = json.load(json_path)
         self.setting = setting
-        setting_ = {'activation':'tanh', 'nn_shape':(5,10), 'batch_size':16, 'epoch':1, 'learning_rate': 0.001} # default setting
+        setting_ = {'activation':'tanh', 'nn_shape':(5,10), 'batch_size':16, 'epoch':1, 'learning_rate': 0.001, 'learning_rate_decay':0.9} # default setting
 
         # inital NN
         self.model = MLP()
@@ -24,8 +23,8 @@ class NN():
             self.nn_shape = setting['nn_shape']
 
         # initial train
-        if setting['learning_rate'] is None:
-            self.lr = setting_['learning_rate']
+        if setting['learning_rate'] is None: # need to be rewritten to add deacy rate to lr
+            self.lr = tf.train.exponential_decay(setting_['learning_rate'])
         else:
             self.lr = setting['learning_rate']
 
@@ -39,10 +38,9 @@ class NN():
         else:
             self.epoch = setting['epoch']
 
-        self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-        self.optimizer = tf.keras.optimizers.Adam()
-        
-
+        self.loss_object = tf.keras.losses.MeanSquaredError() # MSE loss function, only for test
+        self.optimizer = tf.keras.optimizers.Adam() # inital adam optimizer
+    
         # initial test
 
     def build_data_set(self, X, Y):
@@ -51,6 +49,9 @@ class NN():
         self.ndata = len(X)
 
         return data_set
+
+    def loss_function(self):
+        loss = true - predict
 
     def train(self):
         model = self.models.optimizers.Adam(learning_rate=self.lr)
@@ -73,8 +74,8 @@ class NN():
     def train_step(self, X, Y):
         with tf.GradientTape() as tape:
 
-            predictions = self.model(images, training=True)
-            self.loss = self.loss_object(labels, predictions)
+            predictions = self.model(X, training=True)
+            self.loss = self.loss_object(Y, predictions)
         gradients = tape.gradient(self.loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
 
@@ -90,14 +91,18 @@ class MLP(tf.keras.Model):
     def __init__(self, **setting):
         super(MLP, self).__init__()
         self.setting = setting
-        self.flatten = tf.keras.layers.Reshape(target_shape=self.setting['nn_shape'])
+        # self.flatten = tf.keras.layers.Reshape(target_shape=self.setting['nn_shape'])
         self.dense1 = tf.keras.layers.Dense(units=self.setting['batch_size'][0], activation=self.setting['activation'])
-        self.dense2 = tf.keras.layers.Dense(units=self.setting['batch_size'][1])
+        self.dense2 = tf.keras.layers.Dense(units=self.setting['batch_size'][0], activation=self.setting['activation'])
+        self.dense3 = tf.keras.layers.Dense(units=self.setting['batch_size'][0], activation=self.setting['activation'])
+        self.dense4 = tf.keras.layers.Dense(units=1)
 
     def call(self, inputs):
-        x = self.flatten(input)
-        x = self.dense1(x)
-        x = self.dense2(x)
+        x = self.flatten(inputs)
+        x = self.dense1(x)  # hidden layer
+        x = self.dense2(x)  # hidden layer
+        x = self.dense3(x)  # hidden layer
+        x = self.dense4(x)  # output layer
         output = x
         return output
 
