@@ -142,7 +142,7 @@ class MO_descriptor():
         int_plus = self.int_grids_cluster(cluster_plus, mo)
         int_minus = self.int_grids_cluster(cluster_minus, mo)
 
-        int, center = np.multiply((int_plus, int_minus),dq[0,0]**3), np.array((center_plus, center_minus))
+        int, center = np.multiply((int_plus, int_minus),dq[0,0]**3), np.multiply((center_plus, center_minus), dq[0,0])
         mo_ = np.zeros((center.shape[1]*2, 4))
         int = int.flatten()
         center = center.reshape((center.shape[1]*2, 3))
@@ -160,11 +160,11 @@ class MO_pair_descriptor():
     def make(self):
         mo1 = self.mo1
         mo2 = self.mo2
-        mo_pair = np.zeros((4,)+mo1.shape)
+        mo_pair = np.zeros((4, len(mo1), len(mo1))) # make \pho_i*\pho_j
 
-        for ii, i in enumerate(mo1):
-            mo_pair[ii,0] = mo1[ii,0] * mo2[ii,0]
-            mo_pair[ii,1:] = np.subtract(mo1[ii,1:], mo2[ii,1:])
+        mo_pair[0] = np.outer(mo1[:,0], mo2[:,0])
+        for i in range(0, 3):            # make q_i - q_j along x, y, z axis where q is generalized coordinate
+            mo_pair[i+1] = np.log(np.outer(np.exp(mo1[:, i+1]), np.exp(-mo2[:, i+1])))
 
         return mo_pair
 

@@ -1,25 +1,24 @@
 '''Convert standard Gaussian cube file of MO to ovlp of 2 MOs'''
 
 import numpy as np
-from pyrsistent import dq
 from pyscf.data.nist import BOHR
 
 def load_cube(cube_file):
-    '''return the values on grids in a 3-d tensor array'''
+    '''return the values on grids in a 3-d tensor array''' # should be cubic grids
     natom = np.loadtxt(cube_file, max_rows=1, skiprows=2, usecols=0, dtype=int)                        # number of atom  
     nq = np.loadtxt(cube_file, max_rows=3, skiprows=3, usecols=0, dtype=int)                           # number of grid point along x, y, z axis
     dq = np.loadtxt(cube_file, max_rows=3, skiprows=3, usecols=(1, 2, 3))                              # grid size vector along x, y, z axis, in Bohr
-    value = np.loadtxt(cube_file, skiprows=6+natom, dtype=np.float64).reshape((nq[0],nq[1],nq[2]))     # values of mo1 on every grid point, in a.u.
+    value = np.loadtxt(cube_file, skiprows=6+natom).reshape((nq[0],nq[1],nq[2]))     # values of mo1 on every grid point, in a.u.
     return nq, dq, value
 
 def load_dat(dat_file):
-    '''return the values on grids in a 3-d tensor array'''
+    '''return the values on grids32n a 3-d tensor array'''
     nq = np.loadtxt(dat_file, max_rows=3, skiprows=3, usecols=0, dtype=int)           # number of grid point along x, y, z axis
     dq = np.zeros((3,3))
     dq_ = np.loadtxt(dat_file, max_rows=3, skiprows=3, usecols=1)                     # grid size vector along x, y, z axis, in Bohr
     for ii, i in enumerate(dq_):
         dq[ii, ii] = i
-    value = np.loadtxt(dat_file, skiprows=6, dtype=np.float64).reshape((nq[0],nq[1],nq[2]))                        # values of mo1 on every grid point, in a.u.
+    value = np.loadtxt(dat_file, skiprows=6).reshape((nq[0],nq[1],nq[2]))                        # values of mo1 on every grid point, in a.u.
     return nq, dq, value
 
 def rotate_grid(dq1, rot_the= 0, rot_phi=0, rot_gam=0):                        # not available yet 5/28/2022
