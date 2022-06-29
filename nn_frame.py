@@ -38,7 +38,6 @@ class NN():
         else:
             self.epoch = setting['epoch']
 
-        self.loss_object = tf.keras.losses.MeanSquaredError() # MSE loss function, only for test
         self.optimizer = tf.keras.optimizers.Adam() # inital adam optimizer
     
         # initial test
@@ -50,15 +49,16 @@ class NN():
 
         return data_set
 
-    def loss_function(self):
-        loss = true - predict
+    def loss_function(self, true, predict):
+        loss = tf.keras.losses.MeanSquaredError(true, predict) # MSE loss function, only for test
+        return loss
 
     def train(self):
         model = self.models.optimizers.Adam(learning_rate=self.lr)
         nbatches = int(self.ndata // self.batch_size * self.epoch)
         checkpoint = tf.train.Checkpoint(myAwesomeModel=model)      # 实例化Checkpoint，设置保存对象为model
         for batch_index in range(1, nbatches+1):                 
-            X, y = data_loader.get_batch(args.batch_size)
+            data = self.build_data_set(X,Y)
             with tf.GradientTape() as tape:
                 y_pred = model(X)
                 self.loss = tf.keras.losses.sparse_categorical_crossentropy(y_true=y, y_pred=y_pred)
@@ -73,35 +73,40 @@ class NN():
     @tf.function
     def train_step(self, X, Y):
         with tf.GradientTape() as tape:
-
             predictions = self.model(X, training=True)
             self.loss = self.loss_object(Y, predictions)
         gradients = tape.gradient(self.loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
 
     @tf.function
-    def test(self):
+    def test(self, X, Y):
         self.model.evaluate(X,Y)
 
     def save_model(self):
         tf.saved_model(self.model, './model')
 
 class MLP(tf.keras.Model):
-    '''units: the dimension of output tensor'''
     def __init__(self, **setting):
         super(MLP, self).__init__()
         self.setting = setting
         # self.flatten = tf.keras.layers.Reshape(target_shape=self.setting['nn_shape'])
-        self.dense1 = tf.keras.layers.Dense(units=self.setting['batch_size'][0], activation=self.setting['activation'])
-        self.dense2 = tf.keras.layers.Dense(units=self.setting['batch_size'][0], activation=self.setting['activation'])
-        self.dense3 = tf.keras.layers.Dense(units=self.setting['batch_size'][0], activation=self.setting['activation'])
-        self.dense4 = tf.keras.layers.Dense(units=1)
+        self.dense0    = tf.keras.layers.Dense(4)
+        self.dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'])
+        self.dropout1  = tf.nn.dropout(0.5)
+        self.dense2    = tf.keras.layers.Dense(units=self.setting['nn_shape'][1], activation=self.setting['activation'])
+        self.dropout2  = tf.nn.dropout(0.5)
+        self.dense3    = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'])
+        self.dropout3  = tf.nn.dropout(0.5)
+        self.dense4    = tf.keras.layers.Dense(units=1)
 
     def call(self, inputs):
-        x = self.flatten(inputs)
+        x = self.dense0(inputs)
         x = self.dense1(x)  # hidden layer
+        x = self.dropout1(x)
         x = self.dense2(x)  # hidden layer
+        x = self.dropout2(x)        
         x = self.dense3(x)  # hidden layer
+        x = self.dropout3(x)
         x = self.dense4(x)  # output layer
         output = x
         return output
