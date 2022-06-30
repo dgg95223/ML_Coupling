@@ -39,6 +39,7 @@ class NN():
             self.epoch = setting['epoch']
 
         self.optimizer = tf.keras.optimizers.Adam() # inital adam optimizer
+        self.global_step = tf.Variable(0, trainable=False, dtype=tf.int32)
     
         # initial test
 
@@ -46,23 +47,28 @@ class NN():
         # load data from np.array
         data_set = tf.data.Dataset.from_tensor_slices((X,Y)).batch(self.batch_size)
         self.ndata = len(X)
-
-        return data_set
+        self.data_set = data_set
 
     def loss_function(self, true, predict):
         loss = tf.keras.losses.MeanSquaredError(true, predict) # MSE loss function, only for test
         return loss
 
     def train(self):
-        model = self.models.optimizers.Adam(learning_rate=self.lr)
+        model = MLP(self.setting)
         nbatches = int(self.ndata // self.batch_size * self.epoch)
+        self.build_data_set(self.X, self, Y)
+        optimizer = self.models.optimizers.Adam(learning_rate=self.lr).minimize(loss)
+        for i in range(0, self.epoch):
+            for X, Y in self.data_set:
+                self.train_step(X,Y)
+
+        
         checkpoint = tf.train.Checkpoint(myAwesomeModel=model)      # 实例化Checkpoint，设置保存对象为model
         for batch_index in range(1, nbatches+1):                 
             data = self.build_data_set(X,Y)
             with tf.GradientTape() as tape:
-                y_pred = model(X)
-                self.loss = tf.keras.losses.sparse_categorical_crossentropy(y_true=y, y_pred=y_pred)
-                self.loss = tf.reduce_mean(self.loss)
+                Y_ = model(X)
+                loss =  self.loss_function(Y,  Y_)
                 print("batch %d: loss %f" % (batch_index, self.loss.numpy()))
             grads = tape.gradient(loss, model.variables)
             self.optimizer.apply_gradients(grads_and_vars=zip(grads, model.variables))
@@ -86,7 +92,7 @@ class NN():
         tf.saved_model(self.model, './model')
 
 class MLP(tf.keras.Model):
-    def __init__(self, **setting):
+    def __init__(self, setting):
         super(MLP, self).__init__()
         self.setting = setting
         # self.flatten = tf.keras.layers.Reshape(target_shape=self.setting['nn_shape'])
