@@ -6,10 +6,11 @@ class NN():
     def __init__(self, json_path):
         setting = json.load(json_path)
         self.setting = setting
-        setting_ = {'activation':'tanh', 'nn_shape':(5,10), 'batch_size':16, 'epoch':1, 'learning_rate': 0.001, 'learning_rate_decay':0.9} # default setting
+        setting_ = {'activation':'tanh', 'nn_shape':(240,240,240), 'batch_size':32, 'training_steps':10000,\
+                    'learning_rate': 0.001, 'decay_rate':0.9, 'decay_per_steps':1000}  # default setting
 
         # inital NN
-        self.model = MLP()
+        self.model = MLP(self.setting)
         if self.setting['activation'] == 'tanh':
             self.activation = tf.nn.tanh
         elif self.setting['activation'] == 'relu':
@@ -23,29 +24,39 @@ class NN():
             self.nn_shape = setting['nn_shape']
 
         # initial train
-        if setting['learning_rate'] is None: # need to be rewritten to add deacy rate to lr
-            self.lr = tf.train.exponential_decay(setting_['learning_rate'])
+        if setting['learning_rate'] is None:
+            self.lr_base = setting_['learning_rate']
         else:
-            self.lr = setting['learning_rate']
+            self.lr_base = setting['learning_rate']
 
         if setting['batch_siize'] is None:
             self.batch_size = setting_['batch_size']
         else:
             self.batch_size = setting['batch_size']
 
-        if setting['epoch'] is None:
-            self.epoch = setting_['epoch']
+        if setting['training_steps'] is None:
+            self.training_steps = setting_['training_steps']
         else:
-            self.epoch = setting['epoch']
+            self.training_steps = setting['training_steps']
 
-        self.optimizer = tf.keras.optimizers.Adam() # inital adam optimizer
-        self.global_step = tf.Variable(0, trainable=False, dtype=tf.int32)
+        if setting['decay_per_steps'] is None:
+            self.decay_per_steps = setting_['decay_per_steps']
+        else:
+            self.decay_per_steps = setting['decay_per_steps']
+
+        if setting['decay_rate'] is None:
+            self.decay_rate = setting_['decay_rate']
+        else:
+            self.decay_rate = setting['decay_rate']
+
+
+        self.train_tot_step = tf.Variable(0, trainable=False, dtype=tf.int32)  # not finished yet -- 2022/7/1
     
         # initial test
 
     def build_data_set(self, X, Y):
         # load data from np.array
-        data_set = tf.data.Dataset.from_tensor_slices((X,Y)).batch(self.batch_size)
+        data_set = tf.data.Dataset.from_tensor_slices((X,Y)).batch(self.batch_size).shuffl(self.batch_size)
         self.ndata = len(X)
         self.data_set = data_set
 
@@ -54,33 +65,36 @@ class NN():
         return loss
 
     def train(self):
+        # initialize NN model
         model = MLP(self.setting)
-        nbatches = int(self.ndata // self.batch_size * self.epoch)
-        self.build_data_set(self.X, self, Y)
-        optimizer = self.models.optimizers.Adam(learning_rate=self.lr).minimize(loss)
-        for i in range(0, self.epoch):
+        # initialize data set
+        self.build_data_set(self.X, self.Y)
+        if self.ndata > self.training_steps:
+            print('The training steps are not suffcient enough to cover all in data set.')
+
+        istep = 0
+        while istep < self.training_steps:
             for X, Y in self.data_set:
-                self.train_step(X,Y)
+                if istep < self.training_steps:
+                    self.lr = tf.train.exponential_decay(self.lr_base, istep+1, self.decay_per_steps, self.decay_rate)
+                    self.optimizer = self.models.optimizers.Adam(learning_rate=self.lr).minimize(self.loss)
+                    self.train_step(X,Y)
+                    if istep % 100 == 0:
+                        path = checkpoint.save('./save/model_%06s.ckpt'%(istep))      # save model, not finished yet -- 2022/7/1
+                else:
+                    break
+                istep =+ 1                    
+            self.build_data_set(self.X, self.Y) # one epoch finished so refresh the data set to start a new epoch
 
         
-        checkpoint = tf.train.Checkpoint(myAwesomeModel=model)      # 实例化Checkpoint，设置保存对象为model
-        for batch_index in range(1, nbatches+1):                 
-            data = self.build_data_set(X,Y)
-            with tf.GradientTape() as tape:
-                Y_ = model(X)
-                loss =  self.loss_function(Y,  Y_)
-                print("batch %d: loss %f" % (batch_index, self.loss.numpy()))
-            grads = tape.gradient(loss, model.variables)
-            self.optimizer.apply_gradients(grads_and_vars=zip(grads, model.variables))
-            if batch_index % 100 == 0:                              # 每隔100个Batch保存一次.
-                path = checkpoint.save('./save/model.ckpt')         # 保存模型参数到文件
-                print("model saved to %s" % path)
+        checkpoint = tf.train.Checkpoint(myAwesomeModel=model)      # save model, not finished yet -- 2022/7/1
+        # print("model saved to %s" % path)
 
     @tf.function
     def train_step(self, X, Y):
         with tf.GradientTape() as tape:
             predictions = self.model(X, training=True)
-            self.loss = self.loss_object(Y, predictions)
+            self.loss = self.loss_function(Y, predictions)
         gradients = tape.gradient(self.loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
 
@@ -95,7 +109,6 @@ class MLP(tf.keras.Model):
     def __init__(self, setting):
         super(MLP, self).__init__()
         self.setting = setting
-        # self.flatten = tf.keras.layers.Reshape(target_shape=self.setting['nn_shape'])
         self.dense0    = tf.keras.layers.Dense(4)
         self.dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'])
         self.dropout1  = tf.nn.dropout(0.5)
