@@ -4,7 +4,7 @@ import json
 
 class NN():
     def __init__(self, json_path=None, setting_dict=None):
-        setting_ = {'activation':'tanh', 'nn_shape':(240,240,240), 'batch_size':32, 'training_steps':10000,\
+        setting_ = {'activation':'tanh', 'nn_shape':(240,240,240), 'batch_size':32, 'training_steps':5000,\
                     'learning_rate': 0.001, 'decay_rate':0.9, 'decay_per_steps':1000, 'save_step':100}  # default setting
         if json_path is not None:
             setting = json.load(json_path)
@@ -70,20 +70,22 @@ class NN():
         ndata = len(X)
         return data_set, ndata
 
-    def loss_function(self, true, predict):
-        return tf.keras.losses.MeanSquaredError(true, predict) # MSE loss function, only for test
+    def loss_function(self):
+        return tf.keras.losses.MeanSquaredError() # MSE loss function, only for test
 
-    @tf.function
+    # @tf.function
     def train_step(self, X, Y):
         with tf.GradientTape() as tape:
             predictions = self.model(X, training=True)
-            self.loss = self.loss_function(Y, predictions)
+            print('80:', Y.shape, predictions.shape)
+            self.loss = tf.losses.MSE(Y, predictions)
         gradients = tape.gradient(self.loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
 
-    @tf.function
+    # @tf.function
     def test_step(self, X, Y):
-        Y_pred = self.model(X,training=False)
+        Y_pred = self.model(X, training=False)
+        print('88',Y.shape, Y_pred.shape)
         self.accuracy.update_state(Y, Y_pred)
 
     def train(self, X, Y):
@@ -107,16 +109,18 @@ class NN():
                     # save model every selected steps
                     if istep % self.save_step == 0:
                         checkpoint.save('./save/model_%06s.ckpt'%(istep))   # save model, not finished yet -- 2022/7/1
+                        # print('training step: %5d, loss: %5.3f'%(istep, self.loss.numpy()))
+                        print('training step: %5d'%(istep))
                 else:
                     break
-                istep =+ 1                    
+                istep += 1        
             self.train_data_set, self.ndata_train = self.build_data_set(X, Y) # one epoch finished so refresh the data set to start a new epoch
 
         tf.saved_model.save(self.model, './save/model')
 
-    def test(self):
+    def test(self, X, Y):
         # initialize test data set
-        self.test_data_set, self.ndata_test = self.build_data_set()
+        self.test_data_set, self.ndata_test = self.build_data_set(X, Y)
         # run a test step
         for X, Y in self.test_data_set:
             self.test_step(X, Y)
@@ -127,16 +131,19 @@ class MLP(tf.keras.Model):
     def __init__(self, setting):
         super(MLP, self).__init__()
         self.setting = setting
+        # self.input     = tf.keras.layers.InputLayer(input_shape=(4,8,8))
         self.dense0    = tf.keras.layers.Dense(4)
         self.dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'])
-        # self.dropout1  = tf.nn.dropout(0.5)
+        # self.dropout1  = tf.keras.layers.dropout(0.5)
         self.dense2    = tf.keras.layers.Dense(units=self.setting['nn_shape'][1], activation=self.setting['activation'])
-        # self.dropout2  = tf.nn.dropout(0.5)
+        # self.dropout2  = tf.keras.layers.dropout(0.5)
         self.dense3    = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'])
-        # self.dropout3  = tf.nn.dropout(0.5)
-        self.dense4    = tf.keras.layers.Dense(units=1)
+        # self.dropout3  = tf.keras.layers.dropout(0.5)
+        self.dense4    = tf.keras.layers.Dense(1)
 
     def call(self, inputs):
+        # self.input_shape = inputs[0].numpy().shape
+        # x = self.input(inputs)
         x = self.dense0(inputs)
         x = self.dense1(x)  # hidden layer
         # x = self.dropout1(x)
