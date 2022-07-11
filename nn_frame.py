@@ -4,8 +4,8 @@ import json
 
 class NN():
     def __init__(self, json_path=None, setting_dict=None):
-        setting_ = {'activation':'tanh', 'nn_shape':(240,240,240), 'batch_size':32, 'training_steps':5000,\
-                    'learning_rate': 0.001, 'decay_rate':0.9, 'decay_per_steps':1000, 'save_step':100}  # default setting
+        setting_ = {'activation':'tanh', 'nn_shape':(240,240,240), 'batch_size':40, 'training_steps':200000,\
+                    'learning_rate': 0.001, 'decay_rate':0.96, 'decay_per_steps':1000, 'save_step':100}  # default setting
         if json_path is not None:
             setting = json.load(json_path)
         elif (json_path is None) and (setting_dict is not None):
@@ -77,7 +77,7 @@ class NN():
     def train_step(self, X, Y):
         with tf.GradientTape() as tape:
             predictions = self.model(X, training=True)
-            print('80:', Y.shape, predictions.shape)
+            # print('80:', Y, predictions)
             self.loss = tf.losses.MSE(Y, predictions)
         gradients = tape.gradient(self.loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
@@ -132,7 +132,12 @@ class MLP(tf.keras.Model):
         super(MLP, self).__init__()
         self.setting = setting
         # self.input     = tf.keras.layers.InputLayer(input_shape=(4,8,8))
-        self.dense0    = tf.keras.layers.Dense(4)
+        self.input1    = tf.keras.layers.Flatten()
+        self.input2    = tf.keras.layers.Flatten()
+        self.input3    = tf.keras.layers.Flatten()
+        self.input4    = tf.keras.layers.Flatten()
+        self.concate   = tf.keras.layers.Concatenate()
+        # self.dense0    = tf.keras.layers.Dense(4)
         self.dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'])
         # self.dropout1  = tf.keras.layers.dropout(0.5)
         self.dense2    = tf.keras.layers.Dense(units=self.setting['nn_shape'][1], activation=self.setting['activation'])
@@ -143,8 +148,12 @@ class MLP(tf.keras.Model):
 
     def call(self, inputs):
         # self.input_shape = inputs[0].numpy().shape
-        # x = self.input(inputs)
-        x = self.dense0(inputs)
+        x1 = self.input1(inputs[:,0,:])
+        x2 = self.input2(inputs[:,1,:])
+        x3 = self.input3(inputs[:,2,:])
+        x4 = self.input4(inputs[:,3,:])
+        # print(x2.shape)
+        x = self.concate([x1,x2,x3,x4])
         x = self.dense1(x)  # hidden layer
         # x = self.dropout1(x)
         x = self.dense2(x)  # hidden layer
