@@ -4,8 +4,8 @@ import json
 
 class NN():
     def __init__(self, json_path=None, setting_dict=None):
-        setting_ = {'activation':'tanh', 'nn_shape':(240,240,240), 'batch_size':40, 'training_steps':200000,\
-                    'learning_rate': 0.001, 'decay_rate':0.96, 'decay_per_steps':1000, 'save_step':100}  # default setting
+        setting_ = {'activation':'tanh', 'nn_shape':(240,240,240), 'batch_size':160, 'training_steps':100000,\
+                    'learning_rate': 0.001, 'decay_rate':0.96, 'decay_per_steps':1000, 'save_step':10000}  # default setting
         if json_path is not None:
             setting = json.load(json_path)
         elif (json_path is None) and (setting_dict is not None):
@@ -79,6 +79,7 @@ class NN():
             predictions = self.model(X, training=True)
             # print('80:', Y, predictions)
             self.loss = tf.losses.MSE(Y, predictions)
+            self.loss = tf.reduce_mean(self.loss)
         gradients = tape.gradient(self.loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
 
@@ -109,8 +110,8 @@ class NN():
                     # save model every selected steps
                     if istep % self.save_step == 0:
                         checkpoint.save('./save/model_%06s.ckpt'%(istep))   # save model, not finished yet -- 2022/7/1
-                        # print('training step: %5d, loss: %5.3f'%(istep, self.loss.numpy()))
-                        print('training step: %5d'%(istep))
+                        print('training step: %5d, loss: %12.9f'%(istep, self.loss.numpy()))
+                        # print('training step: %5d'%(istep))
                 else:
                     break
                 istep += 1        
