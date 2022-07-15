@@ -78,7 +78,8 @@ class NN():
         with tf.GradientTape() as tape:
             predictions = self.model(X, training=True)
             # print('80:', Y, predictions)
-            self.loss = tf.losses.MSE(Y, predictions)
+            # self.loss = tf.losses.MSE(Y, predictions)
+            self.loss = tf.losses.MAE(Y, predictions)
             self.loss = tf.reduce_mean(self.loss)
         gradients = tape.gradient(self.loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
@@ -86,7 +87,7 @@ class NN():
     # @tf.function
     def test_step(self, X, Y):
         Y_pred = self.model(X, training=False)
-        print('88',Y.shape, Y_pred.shape)
+        # print('88',Y.shape, Y_pred.shape)
         self.accuracy.update_state(Y, Y_pred)
 
     def train(self, X, Y):
@@ -110,7 +111,7 @@ class NN():
                     # save model every selected steps
                     if istep % self.save_step == 0:
                         checkpoint.save('./save/model_%06s.ckpt'%(istep))   # save model, not finished yet -- 2022/7/1
-                        print('training step: %5d, loss: %12.9f'%(istep, self.loss.numpy()))
+                        print('training step: %5d, loss: %12.9f'%(istep, self.loss))
                         # print('training step: %5d'%(istep))
                 else:
                     break
@@ -129,6 +130,7 @@ class NN():
         return accracy
         
 class MLP(tf.keras.Model):
+    '''MO_pair (4,n,n) --> coupling(1,)'''
     def __init__(self, setting):
         super(MLP, self).__init__()
         self.setting = setting
@@ -139,6 +141,56 @@ class MLP(tf.keras.Model):
         self.input4    = tf.keras.layers.Flatten()
         self.concate   = tf.keras.layers.Concatenate()
         # self.dense0    = tf.keras.layers.Dense(4)
+        self.dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'])
+        # self.dropout1  = tf.keras.layers.dropout(0.5)
+        self.dense2    = tf.keras.layers.Dense(units=self.setting['nn_shape'][1], activation=self.setting['activation'])
+        # self.dropout2  = tf.keras.layers.dropout(0.5)
+        self.dense3    = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'])
+        # self.dropout3  = tf.keras.layers.dropout(0.5)
+        self.dense4    = tf.keras.layers.Dense(1)
+
+    def call(self, inputs):
+
+        # self.input_shape = inputs[0].numpy().shape
+        x1 = self.input1(inputs[:,0,:])
+        x2 = self.input2(inputs[:,1,:])
+        x3 = self.input3(inputs[:,2,:])
+        x4 = self.input4(inputs[:,3,:])
+        # print(x2.shape)
+        x = self.concate([x1,x2,x3,x4])
+        x = self.dense1(x)  # hidden layer
+        # x = self.dropout1(x)
+        x = self.dense2(x)  # hidden layer
+        # x = self.dropout2(x)        
+        x = self.dense3(x)  # hidden layer
+        # x = self.dropout3(x)
+        x = self.dense4(x)  # output layer
+        output = x
+        return output
+
+class MLP2(tf.keras.Model):
+    '''MO (4, n) * 2 -> S (1,) -> coupling (1,)'''
+    def __init__(self, setting):
+        super(MLP, self).__init__()
+        self.setting = setting
+        # self.input     = tf.keras.layers.InputLayer(input_shape=(4,8,8))
+        self.input1    = tf.keras.layers.Flatten()
+        self.input2    = tf.keras.layers.Flatten()
+        self.input3    = tf.keras.layers.Flatten()
+        self.input4    = tf.keras.layers.Flatten()
+        self.concate   = tf.keras.layers.Concatenate()
+        # self.dense0    = tf.keras.layers.Dense(4)
+        self.sub1_dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'])
+        # self.dropout1  = tf.keras.layers.dropout(0.5)
+        self.sub1_dense2    = tf.keras.layers.Dense(units=self.setting['nn_shape'][1], activation=self.setting['activation'])
+        # self.dropout2  = tf.keras.layers.dropout(0.5)
+        self.sub1_dense3    = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'])
+
+        self.sub2_dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'])
+        # self.dropout1  = tf.keras.layers.dropout(0.5)
+        self.sub2_dense2    = tf.keras.layers.Dense(units=self.setting['nn_shape'][1], activation=self.setting['activation'])
+        # self.dropout2  = tf.keras.layers.dropout(0.5)
+        self.sub2_dense3    = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'])
         self.dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'])
         # self.dropout1  = tf.keras.layers.dropout(0.5)
         self.dense2    = tf.keras.layers.Dense(units=self.setting['nn_shape'][1], activation=self.setting['activation'])
