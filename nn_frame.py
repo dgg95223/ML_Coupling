@@ -5,7 +5,8 @@ import json
 class NN():
     def __init__(self, json_path=None, setting_dict=None):
         setting_ = {'activation':'tanh', 'nn_shape':(240,240,240), 'batch_size':160, 'training_steps':100000,\
-                    'learning_rate': 0.001, 'decay_rate':0.96, 'decay_per_steps':1000, 'save_step':10000}  # default setting
+                    'learning_rate': 0.001, 'decay_rate':0.96, 'decay_per_steps':1000, 'drop_rate':0.5,\
+                    'save_path':'./save/', 'save_step':10000}  # default setting
         if json_path is not None:
             setting = json.load(json_path)
         elif (json_path is None) and (setting_dict is not None):
@@ -29,6 +30,11 @@ class NN():
             self.nn_shape = setting_['nn_shape']
         else:
             self.nn_shape = setting['nn_shape']
+
+        if setting['drop_rate'] is None:
+            self.drop_rate = setting_['drop_rate']
+        else:
+            self.drop_rate = setting['drop_rate']
 
         # initial train
         if setting['learning_rate'] is None:
@@ -60,6 +66,11 @@ class NN():
             self.save_step = setting_['save_step']
         else:
             self.save_step = setting['save_step']
+
+        if setting['save_path'] is None:
+            self.save_path = setting_['save_path']
+        else:
+            self.save_path = setting['save_path']
     
         # initial test
         self.accuracy = tf.keras.metrics.Accuracy()
@@ -118,7 +129,7 @@ class NN():
                 istep += 1        
             self.train_data_set, self.ndata_train = self.build_data_set(X, Y) # one epoch finished so refresh the data set to start a new epoch
 
-        tf.saved_model.save(self.model, './save/model')
+        tf.saved_model.save(self.model, self.save_path)
 
     def test(self, X, Y):
         # initialize test data set
@@ -142,11 +153,11 @@ class MLP(tf.keras.Model):
         self.concate   = tf.keras.layers.Concatenate()
         # self.dense0    = tf.keras.layers.Dense(4)
         self.dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'])
-        # self.dropout1  = tf.keras.layers.dropout(0.5)
+        self.dropout1  = tf.keras.layers.Dropout(self.setting['drop_rate'])
         self.dense2    = tf.keras.layers.Dense(units=self.setting['nn_shape'][1], activation=self.setting['activation'])
-        # self.dropout2  = tf.keras.layers.dropout(0.5)
+        self.dropout2  = tf.keras.layers.Dropout(self.setting['drop_rate'])
         self.dense3    = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'])
-        # self.dropout3  = tf.keras.layers.dropout(0.5)
+        self.dropout3  = tf.keras.layers.Dropout(self.setting['drop_rate'])
         self.dense4    = tf.keras.layers.Dense(1)
 
     def call(self, inputs):
@@ -159,11 +170,11 @@ class MLP(tf.keras.Model):
         # print(x2.shape)
         x = self.concate([x1,x2,x3,x4])
         x = self.dense1(x)  # hidden layer
-        # x = self.dropout1(x)
+        x = self.dropout1(x)
         x = self.dense2(x)  # hidden layer
-        # x = self.dropout2(x)        
+        x = self.dropout2(x)        
         x = self.dense3(x)  # hidden layer
-        # x = self.dropout3(x)
+        x = self.dropout3(x)
         x = self.dense4(x)  # output layer
         output = x
         return output
