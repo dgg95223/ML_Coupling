@@ -17,7 +17,10 @@ class NN():
         self.setting = setting
         
         # inital NN
-        self.model = MLP(self.setting)
+        if len(self.setting['nn_shape']) == 3:
+            self.model = MLP(self.setting)
+        else:
+            self.model = MLP2(self.setting)
 
         if self.setting['activation'] == 'tanh':
             self.activation = tf.nn.tanh
@@ -161,13 +164,13 @@ class MLP(tf.keras.Model):
         self.input4    = tf.keras.layers.Flatten()
         self.concate   = tf.keras.layers.Concatenate()
         # self.dense0    = tf.keras.layers.Dense(4)
-        self.dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'], kernel_initializer=self.initializer, bias_initializer='zeros')
+        self.dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'], kernel_initializer=self.initializer, bias_initializer=self.initializer)
         # self.dropout1  = tf.keras.layers.Dropout(self.setting['drop_rate'])
-        self.dense2    = tf.keras.layers.Dense(units=self.setting['nn_shape'][1], activation=self.setting['activation'], kernel_initializer=self.initializer, bias_initializer='zeros')
+        self.dense2    = tf.keras.layers.Dense(units=self.setting['nn_shape'][1], activation=self.setting['activation'], kernel_initializer=self.initializer, bias_initializer=self.initializer)
         # self.dropout2  = tf.keras.layers.Dropout(self.setting['drop_rate'])
-        self.dense3    = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'], kernel_initializer=self.initializer, bias_initializer='zeros')
+        self.dense3    = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'], kernel_initializer=self.initializer, bias_initializer=self.initializer)
         # self.dropout3  = tf.keras.layers.Dropout(self.setting['drop_rate'])
-        self.dense4    = tf.keras.layers.Dense(units=1, kernel_initializer=self.initializer)
+        self.denseO    = tf.keras.layers.Dense(units=1, kernel_initializer=self.initializer)
 
     def call(self, inputs):
 
@@ -184,15 +187,16 @@ class MLP(tf.keras.Model):
         # x = self.dropout2(x)        
         x = self.dense3(x)  # hidden layer
         # x = self.dropout3(x)
-        x = self.dense4(x)  # output layer
+        x = self.denseO(x)  # output layer
         output = x
         return output
 
 class MLP2(tf.keras.Model):
-    '''MO (4, n) * 2 -> S (1,) -> coupling (1,)'''
+    '''MO_pair (4,n,n) --> coupling(1,)'''
     def __init__(self, setting):
-        super(MLP, self).__init__()
+        super(MLP2, self).__init__()
         self.setting = setting
+        self.initializer = tf.keras.initializers.GlorotNormal(seed=self.setting['seed'])
         # self.input     = tf.keras.layers.InputLayer(input_shape=(4,8,8))
         self.input1    = tf.keras.layers.Flatten()
         self.input2    = tf.keras.layers.Flatten()
@@ -200,26 +204,18 @@ class MLP2(tf.keras.Model):
         self.input4    = tf.keras.layers.Flatten()
         self.concate   = tf.keras.layers.Concatenate()
         # self.dense0    = tf.keras.layers.Dense(4)
-        self.sub1_dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'])
-        # self.dropout1  = tf.keras.layers.dropout(0.5)
-        self.sub1_dense2    = tf.keras.layers.Dense(units=self.setting['nn_shape'][1], activation=self.setting['activation'])
-        # self.dropout2  = tf.keras.layers.dropout(0.5)
-        self.sub1_dense3    = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'])
-
-        self.sub2_dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'])
-        # self.dropout1  = tf.keras.layers.dropout(0.5)
-        self.sub2_dense2    = tf.keras.layers.Dense(units=self.setting['nn_shape'][1], activation=self.setting['activation'])
-        # self.dropout2  = tf.keras.layers.dropout(0.5)
-        self.sub2_dense3    = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'])
-        self.dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'])
-        # self.dropout1  = tf.keras.layers.dropout(0.5)
-        self.dense2    = tf.keras.layers.Dense(units=self.setting['nn_shape'][1], activation=self.setting['activation'])
-        # self.dropout2  = tf.keras.layers.dropout(0.5)
-        self.dense3    = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'])
-        # self.dropout3  = tf.keras.layers.dropout(0.5)
-        self.dense4    = tf.keras.layers.Dense(1)
+        self.dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'], kernel_initializer=self.initializer, bias_initializer=self.initializer)
+        # self.dropout1  = tf.keras.layers.Dropout(self.setting['drop_rate'])
+        self.dense2    = tf.keras.layers.Dense(units=self.setting['nn_shape'][1], activation=self.setting['activation'], kernel_initializer=self.initializer, bias_initializer=self.initializer)
+        # self.dropout2  = tf.keras.layers.Dropout(self.setting['drop_rate'])
+        self.dense3    = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'], kernel_initializer=self.initializer, bias_initializer=self.initializer)
+        # self.dropout3  = tf.keras.layers.Dropout(self.setting['drop_rate'])
+        self.dense4    = tf.keras.layers.Dense(units=self.setting['nn_shape'][3], activation=self.setting['activation'], kernel_initializer=self.initializer, bias_initializer=self.initializer)
+        # self.dropout4  = tf.keras.layers.Dropout(self.setting['drop_rate'])
+        self.denseO    = tf.keras.layers.Dense(units=1, kernel_initializer=self.initializer)
 
     def call(self, inputs):
+
         # self.input_shape = inputs[0].numpy().shape
         x1 = self.input1(inputs[:,0,:])
         x2 = self.input2(inputs[:,1,:])
@@ -233,7 +229,9 @@ class MLP2(tf.keras.Model):
         # x = self.dropout2(x)        
         x = self.dense3(x)  # hidden layer
         # x = self.dropout3(x)
-        x = self.dense4(x)  # output layer
+        x = self.dense4(x)  # hidden layer
+        # x = self.dropout4(x)
+        x = self.denseO(x)  # output layer
         output = x
         return output
 
