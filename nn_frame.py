@@ -18,7 +18,7 @@ class NN():
         
         # inital NN
         if len(self.setting['nn_shape']) == 3:
-            self.model = MLP(self.setting)
+            self.model = MLP_(self.setting)
         else:
             self.model = MLP2(self.setting)
 
@@ -26,6 +26,8 @@ class NN():
             self.activation = tf.nn.tanh
         elif self.setting['activation'] == 'relu':
             self.activation = tf.nn.relu
+        elif self.setting['activation'] == 'lrelu':
+            self.activation = tf.nn.leaky_relu
         else:
             print('The chosen activation function is not available.')
 
@@ -127,7 +129,7 @@ class NN():
                     # define learning rate
                     self.lr = tf.compat.v1.train.exponential_decay(self.lr_base, istep+1, self.decay_per_steps, self.decay_rate)
                     # define optimizer
-                    self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr)
+                    self.optimizer = tf.keras.optimizers.SGD(learning_rate=self.lr)
                     # one train step
                     self.train_step(X,Y)
                     # save model every selected steps
@@ -181,6 +183,37 @@ class MLP(tf.keras.Model):
         x4 = self.input4(inputs[:,3,:])
         # print(x2.shape)
         x = self.concate([x1,x2,x3,x4])
+        x = self.dense1(x)  # hidden layer
+        # x = self.dropout1(x)
+        x = self.dense2(x)  # hidden layer
+        # x = self.dropout2(x)        
+        x = self.dense3(x)  # hidden layer
+        # x = self.dropout3(x)
+        x = self.denseO(x)  # output layer
+        output = x
+        return output
+
+class MLP_(tf.keras.Model):
+    '''MO_pair_ (n,n) --> coupling(1,)'''
+    def __init__(self, setting):
+        super(MLP_, self).__init__()
+        self.setting = setting
+        self.initializer = tf.keras.initializers.GlorotNormal(seed=self.setting['seed'])
+        self.input1    = tf.keras.layers.Flatten()
+        # self.dense0    = tf.keras.layers.Dense(4)
+        self.dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'], kernel_initializer=self.initializer, bias_initializer='zeros')
+        # self.dropout1  = tf.keras.layers.Dropout(self.setting['drop_rate'])
+        self.dense2    = tf.keras.layers.Dense(units=self.setting['nn_shape'][1], activation=self.setting['activation'], kernel_initializer=self.initializer, bias_initializer='zeros')
+        # self.dropout2  = tf.keras.layers.Dropout(self.setting['drop_rate'])
+        self.dense3    = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'], kernel_initializer=self.initializer, bias_initializer='zeros')
+        # self.dropout3  = tf.keras.layers.Dropout(self.setting['drop_rate'])
+        self.denseO    = tf.keras.layers.Dense(units=1, kernel_initializer=self.initializer)
+
+    def call(self, inputs):
+
+        # self.input_shape = inputs[0].numpy().shape
+        x = self.input1(inputs)
+        # print(x2.shape)
         x = self.dense1(x)  # hidden layer
         # x = self.dropout1(x)
         x = self.dense2(x)  # hidden layer
@@ -277,7 +310,7 @@ class MLP3(tf.keras.Model):
         # x = self.dropout2(x)        
         x = self.sub1_dense3(x)  # hidden layer
         # x = self.dropout3(x)
-        x = self.input4
+        x = self.input4  # not finish yet -- 2022/7/29
         x = self.sub2_dense1(x)  # hidden layer
         # x = self.dropout1(x)
         x = self.sub2_dense2(x)  # hidden layer
