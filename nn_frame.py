@@ -6,7 +6,7 @@ class NN():
     def __init__(self, json_path=None, setting_dict=None):
         setting_ = {'activation':'tanh', 'nn_shape':(240,240,240), 'batch_size':160, 'training_steps':100000,\
                     'learning_rate': 0.001, 'decay_rate':0.96, 'decay_per_steps':1000, 'drop_rate':0.5,\
-                    'save_path':'./save/', 'save_step':10000 ,'seed':1}  # default setting
+                    'save_path':'./save/', 'save_step':10000 ,'seed':1, 'debug_traj':False}  # default setting   
         if json_path is not None:
             setting = json.load(json_path)
         elif (json_path is None) and (setting_dict is not None):
@@ -18,7 +18,7 @@ class NN():
         
         # inital NN
         if len(self.setting['nn_shape']) == 3:
-            self.model = MLP_(self.setting)
+            self.model = MLP(self.setting)
         else:
             self.model = MLP2(self.setting)
 
@@ -86,7 +86,12 @@ class NN():
         else:
             self.seed = setting['seed']
 
-        tf.random.set_seed(self.seed) 
+        # tf.random.set_seed(self.seed) 
+
+        if setting['debug_traj'] is None:
+            self.debug_traj = setting_['debug_traj']
+        else:
+            self.debug_traj = setting['debug_traj']
 
     def build_data_set(self, X, Y):
         # load data from np.array
@@ -124,19 +129,34 @@ class NN():
 
         istep = 0
         while istep < self.training_steps:
-            for X, Y in self.train_data_set:
+            for X_, Y_ in self.train_data_set:
                 if istep < self.training_steps:
                     # define learning rate
                     self.lr = tf.compat.v1.train.exponential_decay(self.lr_base, istep+1, self.decay_per_steps, self.decay_rate)
                     # define optimizer
                     self.optimizer = tf.keras.optimizers.SGD(learning_rate=self.lr)
                     # one train step
-                    self.train_step(X,Y)
+                    self.train_step(X_,Y_)
                     # save model every selected steps
                     if istep % self.save_step == 0:
-                        checkpoint.save('./save/model_%06d.ckpt'%(istep))   # save model, not finished yet -- 2022/7/1
-                        print('training step: %5d, loss: %12.9f'%(istep, self.loss))
+                        checkpoint.save('./save/ckpt/model_%06d.ckpt'%(istep))   # save model, not finished yet -- 2022/7/1
+                        print('training step: %5d, loss: %15.12f'%(istep, self.loss))
                         # print('training step: %5d'%(istep))
+                        if (self.debug_traj is True) and istep >= 0:
+                            import matplotlib as mpl
+                            mpl.use('Agg')
+                            import matplotlib.pyplot as plt
+
+                            error = np.mean((self.model(X, training=False).numpy()-Y)/Y)
+                            x = np.linspace(0, 4, 41)
+                            y = np.linspace(0, 4, 41)
+                            Z = self.model(X, training=False).numpy().reshape((41,41))
+
+                            fig, ax = plt.subplots()
+                            ax.contourf(x,y, Z)
+                            ax.set_title('error_pred: %f'%error)
+                            plt.savefig('./traj/%d.jpg'%istep)
+                            plt.close()
                 else:
                     break
                 istep += 1        
@@ -158,7 +178,8 @@ class MLP(tf.keras.Model):
     def __init__(self, setting):
         super(MLP, self).__init__()
         self.setting = setting
-        self.initializer = tf.keras.initializers.GlorotNormal(seed=self.setting['seed'])
+        # self.initializer = tf.keras.initializers.GlorotNormal(seed=self.setting['seed'])
+        self.initializer = tf.keras.initializers.GlorotNormal()
         # self.input     = tf.keras.layers.InputLayer(input_shape=(4,8,8))
         self.input1    = tf.keras.layers.Flatten()
         self.input2    = tf.keras.layers.Flatten()
@@ -172,7 +193,7 @@ class MLP(tf.keras.Model):
         # self.dropout2  = tf.keras.layers.Dropout(self.setting['drop_rate'])
         self.dense3    = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'], kernel_initializer=self.initializer, bias_initializer=self.initializer)
         # self.dropout3  = tf.keras.layers.Dropout(self.setting['drop_rate'])
-        self.denseO    = tf.keras.layers.Dense(units=1, kernel_initializer=self.initializer)
+        self.denseO    = tf.keras.layers.Dense(units=1)
 
     def call(self, inputs):
 
@@ -198,7 +219,7 @@ class MLP_(tf.keras.Model):
     def __init__(self, setting):
         super(MLP_, self).__init__()
         self.setting = setting
-        self.initializer = tf.keras.initializers.GlorotNormal(seed=self.setting['seed'])
+        self.initializer = tf.keras.initializers.GlorotUniform()
         self.input1    = tf.keras.layers.Flatten()
         # self.dense0    = tf.keras.layers.Dense(4)
         self.dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'], kernel_initializer=self.initializer, bias_initializer='zeros')
