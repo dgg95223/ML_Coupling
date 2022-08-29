@@ -18,7 +18,7 @@ class NN():
         
         # inital NN
         if len(self.setting['nn_shape']) == 3:
-            self.model = MLP(self.setting)
+            self.model =_MLP(self.setting)
         else:
             self.model = MLP2(self.setting)
 
@@ -134,7 +134,7 @@ class NN():
                     # define learning rate
                     self.lr = tf.compat.v1.train.exponential_decay(self.lr_base, istep+1, self.decay_per_steps, self.decay_rate)
                     # define optimizer
-                    self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr)
+                    self.optimizer = tf.keras.optimizers.SGD(learning_rate=self.lr)
                     # one train step
                     self.train_step(X_,Y_)
                     # save model every selected steps
@@ -148,9 +148,9 @@ class NN():
                             import matplotlib.pyplot as plt
 
                             error = np.mean((self.model(X, training=False).numpy()-Y)/Y)
-                            x = np.linspace(0, 4, 41)
-                            y = np.linspace(0, 4, 41)
-                            Z = self.model(X, training=False).numpy().reshape((41,41))
+                            x = np.linspace(-4, 4, 81)
+                            y = np.linspace(-4, 4, 81)
+                            Z = self.model(X, training=False).numpy().reshape((81,81))
 
                             fig, ax = plt.subplots()
                             ax.contourf(x,y, Z)
@@ -376,8 +376,8 @@ class _MLP(tf.keras.Model):  # baseline model
     def call(self, inputs):
 
         # self.input_shape = inputs[0].numpy().shape
-        x1 = self.input1(inputs[:,0,:])
-        x2 = self.input2(inputs[:,1,:])3
+        x1 = self.input1(inputs[:,0])
+        x2 = self.input2(inputs[:,1])
         
         # x3 = self.input3(inputs[:,2,:])
         # x4 = self.input4(inputs[:,3,:])
