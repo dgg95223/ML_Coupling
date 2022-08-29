@@ -86,7 +86,7 @@ class NN():
     # @tf.function
     def test_step(self, X, Y):
         Y_pred = self.model(X, training=False)
-        print('88',Y.shape, Y_pred.shape)
+        # print('88',Y.shape, Y_pred.shape)
         self.accuracy.update_state(Y, Y_pred)
 
     def train(self, X, Y):
