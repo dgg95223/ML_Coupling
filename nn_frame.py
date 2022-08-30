@@ -102,16 +102,25 @@ class NN():
     def loss_function(self):
         return tf.keras.losses.MeanSquaredError() # MSE loss function, only for test
 
-    # @tf.function
-    def train_step(self, X, Y):
+    @tf.function
+    def train_step(self, X, Y, is_save=None):
         with tf.GradientTape() as tape:
             predictions = self.model(X, training=True)
             # print('80:', Y, predictions)
-            self.loss = tf.losses.MSE(Y, predictions)
+            self.loss = tf.keras.losses.MAE(Y, predictions)
             # self.loss = tf.losses.MAE(Y, predictions)
             self.loss = tf.reduce_mean(self.loss)
         gradients = tape.gradient(self.loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
+
+        if is_save is None:
+            is_save = False
+        
+        if is_save is False:
+            pass
+        else:
+            tf.print("loss", self.loss)
+
 
     # @tf.function
     def test_step(self, X, Y):
@@ -126,6 +135,8 @@ class NN():
         self.train_data_set, self.ndata_train = self.build_data_set(X, Y)
         if self.ndata_train > self.training_steps:
             print('The training steps are not sufficient enough to cover all points in data set.')
+        # define optimizer
+        self.optimizer = tf.keras.optimizers.Adam()
 
         istep = 0
         while istep < self.training_steps:
@@ -133,15 +144,17 @@ class NN():
                 if istep < self.training_steps:
                     # define learning rate
                     self.lr = tf.compat.v1.train.exponential_decay(self.lr_base, istep+1, self.decay_per_steps, self.decay_rate)
-                    # define optimizer
-                    self.optimizer = tf.keras.optimizers.SGD(learning_rate=self.lr)
-                    # one train step
-                    self.train_step(X_,Y_)
+                    self.optimizer.learning_rate = self.lr
                     # save model every selected steps
                     if istep % self.save_step == 0:
+                        print('training step: %5d'%(istep))
+                        is_save = True
+                        # one train step
+                        self.train_step(X_,Y_, is_save=is_save)
                         checkpoint.save('./save/ckpt/model_%06d.ckpt'%(istep))   # save model, not finished yet -- 2022/7/1
-                        print('training step: %5d, loss: %15.12f'%(istep, self.loss))
-                        # print('training step: %5d'%(istep))
+                        # print('training step: %5d, loss: %15.12f'%(istep, self.loss.numpy()))
+                        
+                        # tf.print(self.loss)
                         if (self.debug_traj is True) and istep >= 0:
                             import matplotlib as mpl
                             mpl.use('Agg')
