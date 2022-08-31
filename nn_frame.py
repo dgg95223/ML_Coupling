@@ -18,7 +18,7 @@ class NN():
         
         # inital NN
         if len(self.setting['nn_shape']) == 3:
-            self.model =_MLP(self.setting)
+            self.model = MLP(self.setting)
         else:
             self.model = MLP2(self.setting)
 
@@ -106,10 +106,10 @@ class NN():
     def train_step(self, X, Y, is_save=None):
         with tf.GradientTape() as tape:
             predictions = self.model(X, training=True)
-            # print('80:', Y, predictions)
-            # self.loss = tf.keras.losses.MSE(Y, predictions)
-            self.loss = tf.losses.MAE(Y, predictions)
-            self.loss = tf.reduce_mean(self.loss)
+            # print('80:', Y.dtype, predictions.dtype)
+            self.loss = self.loss_function()(Y, predictions)
+            # self.loss = tf.losses.MAE(Y, predictions)
+            # self.loss = tf.reduce_mean(self.loss)
         gradients = tape.gradient(self.loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
 
@@ -119,8 +119,7 @@ class NN():
         if is_save is False:
             pass
         else:
-            tf.print("loss", self.loss)
-
+            tf.print("loss: ", self.loss)
 
     # @tf.function
     def test_step(self, X, Y):
@@ -151,7 +150,7 @@ class NN():
                         is_save = True
                         # one train step
                         self.train_step(X_,Y_, is_save=is_save)
-                        checkpoint.save('./save/ckpt/model_%06d.ckpt'%(istep))   # save model, not finished yet -- 2022/7/1
+                        checkpoint.save(self.save_path+'/ckpt/model_%06d.ckpt'%(istep))   # save model, not finished yet -- 2022/7/1
                         # print('training step: %5d, loss: %15.12f'%(istep, self.loss.numpy()))
                         
                         if (self.debug_traj is True) and istep >= 0:
@@ -160,9 +159,9 @@ class NN():
                             import matplotlib.pyplot as plt
 
                             error = np.mean((self.model(X, training=False).numpy()-Y)/Y)
-                            x = np.linspace(-4, 4, 81)
-                            y = np.linspace(-4, 4, 81)
-                            Z = self.model(X, training=False).numpy().reshape((81,81))
+                            x = np.linspace(0, 4, 41)
+                            y = np.linspace(0, 4, 41)
+                            Z = self.model(X, training=False).numpy().reshape((41,41))
 
                             fig, ax = plt.subplots()
                             ax.contourf(x,y, Z)
@@ -174,7 +173,7 @@ class NN():
                 istep += 1        
             self.train_data_set, self.ndata_train = self.build_data_set(X, Y) # one epoch finished so refresh the data set to start a new epoch
 
-        tf.saved_model.save(self.model, self.save_path)
+        tf.saved_model.save(self.model, self.save_path+'/model')
 
     def test(self, X, Y):
         # initialize test data set
