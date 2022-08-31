@@ -107,8 +107,8 @@ class NN():
         with tf.GradientTape() as tape:
             predictions = self.model(X, training=True)
             # print('80:', Y, predictions)
-            self.loss = tf.keras.losses.MAE(Y, predictions)
-            # self.loss = tf.losses.MAE(Y, predictions)
+            # self.loss = tf.keras.losses.MSE(Y, predictions)
+            self.loss = tf.losses.MAE(Y, predictions)
             self.loss = tf.reduce_mean(self.loss)
         gradients = tape.gradient(self.loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
@@ -154,7 +154,6 @@ class NN():
                         checkpoint.save('./save/ckpt/model_%06d.ckpt'%(istep))   # save model, not finished yet -- 2022/7/1
                         # print('training step: %5d, loss: %15.12f'%(istep, self.loss.numpy()))
                         
-                        # tf.print(self.loss)
                         if (self.debug_traj is True) and istep >= 0:
                             import matplotlib as mpl
                             mpl.use('Agg')
