@@ -144,12 +144,16 @@ class NN():
                     # define learning rate
                     self.lr = tf.compat.v1.train.exponential_decay(self.lr_base, istep+1, self.decay_per_steps, self.decay_rate)
                     self.optimizer.learning_rate = self.lr
+                    # one train step
+                    if istep % self.save_step == 0:
+                        is_save = True
+                    else:
+                        is_save = False
+                    self.train_step(X_,Y_, is_save=is_save)
+                    
                     # save model every selected steps
                     if istep % self.save_step == 0:
                         print('training step: %5d'%(istep))
-                        is_save = True
-                        # one train step
-                        self.train_step(X_,Y_, is_save=is_save)
                         checkpoint.save(self.save_path+'/ckpt/model_%06d.ckpt'%(istep))   # save model, not finished yet -- 2022/7/1
                         # print('training step: %5d, loss: %15.12f'%(istep, self.loss.numpy()))
                         
@@ -164,7 +168,7 @@ class NN():
                             Z = self.model(X, training=False).numpy().reshape((41,41))
 
                             fig, ax = plt.subplots()
-                            ax.contourf(x,y, Z)
+                            ax.contourf(x,y, np.exp(-Z))
                             ax.set_title('error_pred: %f'%error)
                             plt.savefig('./traj/%d.jpg'%istep)
                             plt.close()
