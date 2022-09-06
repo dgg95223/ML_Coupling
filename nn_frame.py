@@ -162,14 +162,14 @@ class NN():
                             mpl.use('Agg')
                             import matplotlib.pyplot as plt
 
-                            error = np.mean((self.model(X, training=False).numpy()-Y)/Y)
+                            error = np.mean(np.multiply(self.model(X, training=False).numpy().reshape((len(Y),))-Y, np.power(Y,-1))*100)
                             x = np.linspace(0, 4, 41)
                             y = np.linspace(0, 4, 41)
                             Z = self.model(X, training=False).numpy().reshape((41,41))
 
                             fig, ax = plt.subplots()
                             ax.contourf(x,y, np.exp(-Z))
-                            ax.set_title('error_pred: %f'%error)
+                            ax.set_title('Error: %f%%'%error)
                             plt.savefig('./traj/%d.jpg'%istep)
                             plt.close()
                 else:
