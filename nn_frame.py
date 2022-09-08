@@ -323,9 +323,9 @@ class MLP_Dexter(tf.keras.Model):
         self.sub1_input3    = tf.keras.layers.Flatten()
         self.sub1_input4    = tf.keras.layers.Flatten()
         self.sub1_concate   = tf.keras.layers.Concatenate()
-        self.sub1_BN1       =tf.keras.layers.BatchNormalization()
-        self.sub1_BN2       =tf.keras.layers.BatchNormalization()
-        self.sub1_BN3       =tf.keras.layers.BatchNormalization()
+        self.sub1_BN1       = tf.keras.layers.BatchNormalization()
+        self.sub1_BN2       = tf.keras.layers.BatchNormalization()
+        self.sub1_BN3       = tf.keras.layers.BatchNormalization()
         # self.sub1_dense0    = tf.keras.layers.Dense(4)
         self.sub1_dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'])
         # self.sub1_dropout1  = tf.keras.layers.Dropout(self.setting['drop_rate'])
@@ -341,9 +341,9 @@ class MLP_Dexter(tf.keras.Model):
         self.sub2_input3    = tf.keras.layers.Flatten()
         self.sub2_input4    = tf.keras.layers.Flatten()
         self.sub2_concate   = tf.keras.layers.Concatenate()
-        self.sub2_BN1       =tf.keras.layers.BatchNormalization()
-        self.sub2_BN2       =tf.keras.layers.BatchNormalization()
-        self.sub2_BN3       =tf.keras.layers.BatchNormalization()
+        self.sub2_BN1       = tf.keras.layers.BatchNormalization()
+        self.sub2_BN2       = tf.keras.layers.BatchNormalization()
+        self.sub2_BN3       = tf.keras.layers.BatchNormalization()
         # self.sub2_dense0    = tf.keras.layers.Dense(4)
         self.sub2_dense1    = tf.keras.layers.Dense(units=self.setting['nn_shape'][0], activation=self.setting['activation'])
         # self.sub2_dropout1  = tf.keras.layers.Dropout(self.setting['drop_rate'])
@@ -356,26 +356,53 @@ class MLP_Dexter(tf.keras.Model):
         # main net
         self.concate        = tf.keras.layers.Concatenate()
         self.dense1         = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'])
+        self.dense2         = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'])
+        self.denseO         = tf.keras.layers.Dense(units=1)
     def call(self, inputs):
+        # sub-net 1 input
+        x1 = self.sub1_input1(inputs[0,:,0,:])
+        x2 = self.sub1_input2(inputs[0,:,1,:])
+        x3 = self.sub1_input3(inputs[0,:,2,:])
+        x4 = self.sub1_input4(inputs[0,:,3,:])
+        # sub-net 2 input
+        x5 = self.sub2_input1(inputs[1,:,0,:])
+        x6 = self.sub2_input2(inputs[1,:,1,:])
+        x7 = self.sub2_input3(inputs[1,:,2,:])
+        x8 = self.sub2_input4(inputs[1,:,3,:])
 
-        # self.input_shape = inputs[0].numpy().shape
-        x1 = self.input1(inputs[:,0,:])
-        x2 = self.input2(inputs[:,1,:])
-        x3 = self.input3(inputs[:,2,:])
-        x4 = self.input4(inputs[:,3,:])
-        # print(x2.shape)
-        x = self.concate([x1,x2,x3,x4])
-        x = self.dense1(x)  # hidden layer
-        x = self.BN1(x)
-        # x = self.dropout1(x)
-        x = self.dense2(x)  # hidden layer
-        x = self.BN2(x)
-        # x = self.dropout2(x)        
-        x = self.dense3(x)  # hidden layer
-        x = self.BN3(x)
-        # x = self.dropout3(x)
-        x = self.denseO(x)  # output layer
+        # sub-net 1
+        X1 = self.sub1_concate([x1,x2,x3,x4])
+        X1 = self.sub1_dense1(X1 )  # hidden layer
+        X1 = self.sub1_BN1(X1 )
+        # X1 = self.sub1_dropout1(X1 )
+        X1 = self.sub1_dense2(X1 )  # hidden layer
+        X1 = self.sub1_BN2(X1 )
+        # X1 = self.sub1_dropout2(X1 )        
+        X1 = self.sub1_dense3(X1 )  # hidden layer
+        X1 = self.sub1_BN3(X1 )
+        # X1 = self.sub1_dropout3(X1 )
+        X1 = self.sub1_denseO(X1 )  # output layer
+
+        # sub-net 2
+        X2 = self.sub2_concate([x5,x6,x7,x8])
+        X2 = self.sub2_dense1(X2 )  # hidden layer
+        X2 = self.sub2_BN1(X2 )
+        # X2 = self.sub2_dropout1(X2 )
+        X2 = self.sub2_dense2(X2 )  # hidden layer
+        X2 = self.sub2_BN2(X2 )
+        # X2 = self.sub2_dropout2(X2 )        
+        X2 = self.sub2_dense3(X2 )  # hidden layer
+        X2 = self.sub2_BN3(X2 )
+        # X2 = self.sub2_dropout3(X2 )
+        X2 = self.sub2_denseO(X2 )  # output layer
+
+        # main net
+        x = self.concate([X1,X2])
+        x = self.dense1(x)
+        x = self.dense2(x)
+        x = self.denseO(x)
         output = x
+
         return output
 
 class _MLP(tf.keras.Model):  # baseline model
