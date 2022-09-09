@@ -20,7 +20,7 @@ class NN():
         if len(self.setting['nn_shape']) == 3:
             self.model = MLP(self.setting)
         else:
-            self.model = MLP2(self.setting)
+            self.model = MLP_Dexter(self.setting)
 
         if self.setting['activation'] == 'tanh':
             self.activation = tf.nn.tanh
@@ -165,10 +165,10 @@ class NN():
                             error = np.mean(np.multiply(self.model(X, training=False).numpy().reshape((len(Y),))-Y, np.power(Y,-1))*100)
                             x = np.linspace(0, 4, 41)
                             y = np.linspace(0, 4, 41)
-                            Z = self.model(X, training=False).numpy().reshape((41,41))
+                            Z = self.model(X, training=False).numpy().reshape((41,41)).T
 
                             fig, ax = plt.subplots()
-                            ax.contourf(x,y, np.exp(-Z))
+                            ax.contourf(x,y, -Z)
                             ax.set_title('Error: %f%%'%error)
                             plt.savefig('./traj/%d.jpg'%istep)
                             plt.close()
@@ -313,7 +313,7 @@ class MLP2(tf.keras.Model):
 class MLP_Dexter(tf.keras.Model):
     '''2 * MO_pair 2 * (4,n,n) --> Dexter coupling(1,)'''
     def __init__(self, setting):
-        super(MLP, self).__init__()
+        super(MLP_Dexter, self).__init__()
         self.setting = setting
         # self.initializer = tf.keras.initializers.GlorotNormal(seed=self.setting['seed'])
         self.initializer = tf.keras.initializers.GlorotNormal()
@@ -355,20 +355,20 @@ class MLP_Dexter(tf.keras.Model):
 
         # main net
         self.concate        = tf.keras.layers.Concatenate()
-        self.dense1         = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'])
-        self.dense2         = tf.keras.layers.Dense(units=self.setting['nn_shape'][2], activation=self.setting['activation'])
+        self.dense1         = tf.keras.layers.Dense(units=self.setting['nn_shape'][3], activation=self.setting['activation'])
+        self.dense2         = tf.keras.layers.Dense(units=self.setting['nn_shape'][3], activation=self.setting['activation'])
         self.denseO         = tf.keras.layers.Dense(units=1)
     def call(self, inputs):
         # sub-net 1 input
-        x1 = self.sub1_input1(inputs[0,:,0,:])
-        x2 = self.sub1_input2(inputs[0,:,1,:])
-        x3 = self.sub1_input3(inputs[0,:,2,:])
-        x4 = self.sub1_input4(inputs[0,:,3,:])
+        x1 = self.sub1_input1(inputs[:,0,0,:])
+        x2 = self.sub1_input2(inputs[:,0,1,:])
+        x3 = self.sub1_input3(inputs[:,0,2,:])
+        x4 = self.sub1_input4(inputs[:,0,3,:])
         # sub-net 2 input
-        x5 = self.sub2_input1(inputs[1,:,0,:])
-        x6 = self.sub2_input2(inputs[1,:,1,:])
-        x7 = self.sub2_input3(inputs[1,:,2,:])
-        x8 = self.sub2_input4(inputs[1,:,3,:])
+        x5 = self.sub2_input1(inputs[:,1,0,:])
+        x6 = self.sub2_input2(inputs[:,1,1,:])
+        x7 = self.sub2_input3(inputs[:,1,2,:])
+        x8 = self.sub2_input4(inputs[:,1,3,:])
 
         # sub-net 1
         X1 = self.sub1_concate([x1,x2,x3,x4])
