@@ -170,6 +170,7 @@ class NN():
                             fig, ax = plt.subplots()
                             ax.contourf(x,y, -Z)
                             ax.set_title('Error: %f%%'%error)
+                            ax.set_aspect('equal')
                             plt.savefig('./traj/%d.jpg'%istep)
                             plt.close()
                 else:
