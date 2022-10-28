@@ -95,7 +95,7 @@ class NN():
 
     def build_data_set(self, X, Y):
         # load data from np.array
-        data_set = tf.data.Dataset.from_tensor_slices((X,Y)).batch(self.batch_size).shuffle(self.batch_size)
+        data_set = tf.data.Dataset.from_tensor_slices((X,Y)).shuffle(self.batch_size).batch(self.batch_size)
         ndata = len(X)
         return data_set, ndata
 
@@ -168,7 +168,7 @@ class NN():
                             Z = self.model(X, training=False).numpy().reshape((41,41)).T
 
                             fig, ax = plt.subplots()
-                            ax.contourf(x,y, -Z)
+                            ax.contourf(x,y,np.exp(-Z))
                             ax.set_title('Error: %f%%'%error)
                             ax.set_aspect('equal')
                             plt.savefig('./traj/%d.jpg'%istep)
