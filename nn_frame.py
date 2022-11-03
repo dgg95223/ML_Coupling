@@ -18,7 +18,7 @@ class NN():
         
         # inital NN
         if len(self.setting['nn_shape']) == 3:
-            self.model = MLP(self.setting)
+            self.model = _MLP(self.setting)
         else:
             self.model = MLP_Dexter(self.setting)
 

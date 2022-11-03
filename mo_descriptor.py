@@ -160,11 +160,24 @@ class MO_pair_descriptor():
     def make(self):
         mo1 = self.mo1
         mo2 = self.mo2
-        mo_pair = np.zeros((4, len(mo1), len(mo1))) # make \pho_i*\pho_j
+        # mo_pair = np.zeros((4, len(mo1), len(mo1))) # make \pho_i*\pho_j
+
+        # mo_pair[0] = np.outer(mo1[:,0], mo2[:,0])
+        # for i in range(0, 3):            # make q_i - q_j along x, y, z axis where q is generalized coordinate
+        #     mo_pair[i+1] = np.log(np.outer(np.exp(mo1[:, i+1]), np.exp(-mo2[:, i+1])))
+        mo_pair = np.zeros((2, len(mo1), len(mo1))) # make \pho_i*\pho_j
+        dist = []
 
         mo_pair[0] = np.outer(mo1[:,0], mo2[:,0])
         for i in range(0, 3):            # make q_i - q_j along x, y, z axis where q is generalized coordinate
-            mo_pair[i+1] = np.log(np.outer(np.exp(mo1[:, i+1]), np.exp(-mo2[:, i+1])))
+            dist_ = np.power(np.log(np.outer(np.exp(mo1[:, i+1]), np.exp(-mo2[:, i+1]))),2)
+            dist.append(dist_)
+        
+        ecu_dist = np.sqrt(np.add(np.add(dist[0], dist[1]), dist[2]))
+        mo_pair[1] = ecu_dist
+
+            
+
 
         return mo_pair
 
