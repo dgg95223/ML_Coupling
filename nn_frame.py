@@ -6,7 +6,8 @@ class NN():
     def __init__(self, json_path=None, setting_dict=None):
         setting_ = {'activation':'tanh', 'nn_shape':(240,240,240), 'batch_size':160, 'training_steps':100000,\
                     'learning_rate': 0.001, 'decay_rate':0.96, 'decay_per_steps':1000, 'drop_rate':0.5,\
-                    'save_path':'./save/', 'save_step':10000 ,'seed':1, 'debug_traj':False}  # default setting   
+                    'save_path':'./save/', 'save_step':10000 ,'seed':None, 'debug_traj':False,\
+                    'pre_trained_path':None}  # default setting   
         if json_path is not None:
             setting = json.load(json_path)
         elif (json_path is None) and (setting_dict is not None):
@@ -14,6 +15,11 @@ class NN():
         else:
             print('No setting is specified, default setting will be applied.')
             setting = setting_
+
+        for key in setting_:
+            if key not in setting:
+                setting[key] = setting_[key]
+        
         self.setting = setting
         
         # inital NN
@@ -21,6 +27,9 @@ class NN():
             self.model = _MLP(self.setting)
         else:
             self.model = MLP_Dexter(self.setting)
+
+        if self.setting['pre_trained_path'] is not None:
+            self.model = tf.keras.models.load_model(self.setting['pre_trained_path'], compile=False)
 
         if self.setting['activation'] == 'tanh':
             self.activation = tf.nn.tanh
@@ -77,10 +86,10 @@ class NN():
         else:
             self.save_path = setting['save_path']
     
-        # initial test
+        # initial test # to be optimized
         self.accuracy = tf.keras.metrics.Accuracy()
 
-        # initialize seed
+        # initialize seed # to be optimized
         if setting['seed'] is None:
             self.seed = setting_['seed']
         else:
@@ -100,7 +109,7 @@ class NN():
         return data_set, ndata
 
     def loss_function(self):
-        return tf.keras.losses.MeanSquaredError() # MSE loss function, only for test
+        return tf.keras.losses.MeanSquaredError() # MSE loss function
 
     @tf.function
     def train_step(self, X, Y, is_save=None):
@@ -178,7 +187,7 @@ class NN():
                 istep += 1        
             self.train_data_set, self.ndata_train = self.build_data_set(X, Y) # one epoch finished so refresh the data set to start a new epoch
 
-        tf.saved_model.save(self.model, self.save_path+'/model')
+        self.model.save(self.save_path+'/model')
 
     def test(self, X, Y):
         # initialize test data set

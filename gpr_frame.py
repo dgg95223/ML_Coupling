@@ -21,7 +21,7 @@ class GPR():
         self.alpha = self.setting['alpha']
 
     def train(self, X, Y):
-        self.model = GaussianProcessRegressor(kernel=self.kernel, alpha=self.alpha, optimize=True)
+        self.model = GaussianProcessRegressor(kernel=self.kernel, alpha=self.alpha)
         self.model.fit(X, Y)
 
     def predict(self, X):
