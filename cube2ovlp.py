@@ -1,7 +1,8 @@
 '''Convert standard Gaussian cube file of MO to ovlp of 2 MOs'''
 
 import numpy as np
-from pyscf.data.nist import BOHR
+
+BOHR = 0.52917721092
 
 def load_cube(cube_file):
     '''return the values on grids in a 3-d tensor array''' # should be cubic grids
