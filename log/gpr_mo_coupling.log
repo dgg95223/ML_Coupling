@@ -1,0 +1,11 @@
+Number of points to be deleted for homo:   1276
+Number of points to be deleted for lumo:   1283
+Ensemble 5:
+MPE of full data set: -2.811 % 
+Error of training set with 37252 samples: -0.069 % 
+Error of testing set with 37248 samples: -2.780 % 
+MAPE of full data set: 4.196 % 
+Error of training set with 37252 samples: 1.370 % 
+Error of testing set with 37248 samples: 4.161 % 
+
+

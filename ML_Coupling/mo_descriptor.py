@@ -1,5 +1,5 @@
 import numpy as np
-from cube2ovlp import load_cube, load_dat
+from ML_Coupling.cube2ovlp import load_cube, load_dat
 
 class MO_descriptor():
     def __init__(self, cube_file):

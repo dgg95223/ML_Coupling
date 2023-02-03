@@ -1,5 +1,5 @@
-import mo_descriptor as md
-import nn_frame as nn
+import ML_Coupling.mo_descriptor as md
+import ML_Coupling.nn_frame as nn
 import numpy as np
 import subprocess
 import copy
