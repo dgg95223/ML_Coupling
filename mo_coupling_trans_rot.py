@@ -93,25 +93,31 @@ test_clumo = np.delete(copy.deepcopy(train_clumo),idiff,0)
 6. load model 
 ''' 
 setting = {'activation':'tanh','nn_shape':(256,256,256),'batch_size':len(train_homo_), 'training_steps':200000,\
-'learning_rate': 0.00008, 'decay_rate':0.95, 'decay_per_steps':1000, 'save_step':1000, 'drop_rate':0, 'save_path':'./nat_dimer_homo_total_%d'%len(train_homo_),\
-'seed':None, 'debug_traj':False, 'pre_trained_path':'./nat_dimer_33884/'}
+'learning_rate': 0.00008, 'decay_rate':0.95, 'decay_per_steps':1000, 'save_step':1000, 'drop_rate':0, 'save_path':'./trained_model/nat_dimer_homo_total_%d'%len(train_homo_),\
+'seed':None, 'debug_traj':False, 'pre_trained_path':'./trained_model/nat_dimer_33884/'}
 NN_ho = nn.NN(setting_dict=setting)
 NN_ho.train(train_homo_,train_chomo_)
+pred_ho_1 = NN_ho.model(homo_pairs, training=False).numpy().reshape((len(homo_pairs),))
+pred_ho_2 = NN_ho.model(train_homo_, training=False).numpy().reshape((len(train_homo_),))
+pred_ho_3 = NN_ho.model(test_homo, training=False).numpy().reshape((len(test_homo),))
 
 setting = {'activation':'tanh','nn_shape':(256,256,256),'batch_size':len(train_lumo_), 'training_steps':200000,\
-'learning_rate': 0.00008, 'decay_rate':0.95, 'decay_per_steps':1000, 'save_step':1000, 'drop_rate':0, 'save_path':'./nat_dimer_lumo_total_%d'%len(train_lumo_),\
-'seed':None, 'debug_traj':False, 'pre_trained_path':'./nat_dimer_33884/'}
+'learning_rate': 0.00008, 'decay_rate':0.95, 'decay_per_steps':1000, 'save_step':1000, 'drop_rate':0, 'save_path':'./trained_model/nat_dimer_lumo_total_%d'%len(train_lumo_),\
+'seed':None, 'debug_traj':False, 'pre_trained_path':'./trained_model/nat_dimer_33884/'}
 NN_lu = nn.NN(setting_dict=setting)
 NN_lu.train(train_lumo_,train_clumo_)
+pred_lu_1 = NN_lu.model(lumo_pairs, training=False).numpy().reshape((len(lumo_pairs),))
+pred_lu_2 = NN_lu.model(train_lumo_, training=False).numpy().reshape((len(train_lumo_),))
+pred_lu_3 = NN_lu.model(test_lumo, training=False).numpy().reshape((len(test_lumo),))
 
-error1 = np.mean(np.multiply(abs(NN_ho.model(train_homo_pairs, training=False).numpy().reshape((len(train_homo_pairs),))-train_c_homo), np.power(train_c_homo,-1))*100)
-error2 = np.mean(np.multiply(abs(NN_ho.model(train_homo_, training=False).numpy().reshape((len(train_homo_),))-train_chomo_), np.power(train_chomo_,-1))*100)
-error3 = np.mean(np.multiply(abs(NN_ho.model(test_homo, training=False).numpy().reshape((len(test_homo),))-test_chomo), np.power(test_chomo,-1))*100)
+error1 = np.mean(np.multiply(abs(pred_ho_1-(-np.log(c_homo))), np.power(-np.log(c_homo),-1))*100)
+error2 = np.mean(np.multiply(abs(pred_ho_1-train_chomo_), np.power(train_chomo_,-1))*100)
+error3 = np.mean(np.multiply(abs(pred_ho_1-test_chomo), np.power(test_chomo,-1))*100)
 print('Error of full data set: %5.3f %% \nError of training set with %d samples: %5.3f %% \nError of testing set with %d samples: %5.3f %% '\
-      %(error1,len(train_homo_),error2,len(test_homo),error3))
+        %(error1,len(train_homo_),error2,len(test_homo),error3))
 
-error1 = np.mean(np.multiply(abs(NN_lu.model(train_lumo_pairs, training=False).numpy().reshape((len(train_lumo_pairs),))-train_c_lumo), np.power(train_c_lumo,-1))*100)
-error2 = np.mean(np.multiply(abs(NN_lu.model(train_lumo_, training=False).numpy().reshape((len(train_lumo_),))-train_clumo_), np.power(train_clumo_,-1))*100)
-error3 = np.mean(np.multiply(abs(NN_lu.model(test_lumo, training=False).numpy().reshape((len(test_lumo),))-test_clumo), np.power(test_clumo,-1))*100)
+error1 = np.mean(np.multiply(abs(pred_lu_1-(-np.log(c_lumo))), np.power(-np.log(c_lumo),-1))*100)
+error2 = np.mean(np.multiply(abs(pred_lu_1-train_clumo_), np.power(train_clumo_,-1))*100)
+error3 = np.mean(np.multiply(abs(pred_lu_1-test_clumo), np.power(test_clumo,-1))*100)
 print('Error of full data set: %5.3f %% \nError of training set with %d samples: %5.3f %% \nError of testing set with %d samples: %5.3f %% '\
-      %(error1,len(train_lumo_),error2,len(test_lumo),error3))
+        %(error1,len(train_lumo_),error2,len(test_lumo),error3))
