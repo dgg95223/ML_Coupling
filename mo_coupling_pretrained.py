@@ -94,8 +94,9 @@ test_clumo = np.delete(copy.deepcopy(train_clumo),idiff,0)
 6. load model
 '''
 model = tf.keras.models.load_model(model_path, compile=False)
+pred = np.exp(-model(homo_pairs, training=False).numpy().reshape((len(homo_pairs),)))
 
 print(np.exp(-model(train_homo_pairs, training=False).numpy()),'\n',np.exp(-train_c_homo))
-error1 = np.mean(np.multiply(abs(np.exp(-model(train_homo_pairs, training=False).numpy().reshape((len(train_homo_pairs),)))-np.exp(-train_c_homo)), np.power(np.exp(-train_c_homo),-1))*100)
-error2 = np.mean(abs(np.exp(-model(train_homo_pairs, training=False).numpy().reshape((len(train_homo_pairs),)))-np.exp(-train_c_homo))*1000)
+error1 = np.mean(np.multiply(abs(pred-np.exp(-train_c_homo)), np.power(np.exp(-train_c_homo),-1))*100)
+error2 = np.mean(abs(pred-np.exp(-train_c_homo))*1000)
 print('MAPE: ',error1, '\nMAE(meV): ',error2)
