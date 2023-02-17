@@ -153,14 +153,14 @@ for m in ss:
     pred_lu_2 = np.exp(-NN_lu.model(train_lumo_, training=False).numpy().reshape((len(train_lumo_),)))
     pred_lu_3 = np.exp(-NN_lu.model(test_lumo, training=False).numpy().reshape((len(test_lumo),)))
 
-    error1 = np.mean(np.multiply(abs(pred_ho_1-(np.exp(-train_c_homo))), np.power(train_c_homo,-1))*100)
-    error2 = np.mean(np.multiply(abs(pred_ho_1-(np.exp(-train_chomo_))), np.power(train_chomo_,-1))*100)
-    error3 = np.mean(np.multiply(abs(pred_ho_1-(np.exp(-test_chomo))), np.power(test_chomo,-1))*100)
+    error1 = np.mean(np.multiply(abs(pred_ho_1-(np.exp(-train_c_homo))), np.power(np.exp(-train_c_homo),-1))*100)
+    error2 = np.mean(np.multiply(abs(pred_ho_1-(np.exp(-train_chomo_))), np.power(np.exp(-train_chomo_),-1))*100)
+    error3 = np.mean(np.multiply(abs(pred_ho_1-(np.exp(-test_chomo))), np.power(np.exp(-test_chomo),-1))*100)
     print('Error of full data set: %5.3f %% \nError of training set with %d samples: %5.3f %% \nError of testing set with %d samples: %5.3f %% '\
           %(error1,len(train_homo_),error2,len(test_homo),error3))
 
-    error1 = np.mean(np.multiply(abs(pred_lu_1-(np.exp(-train_c_lumo))), np.power(train_c_lumo,-1))*100)
-    error2 = np.mean(np.multiply(abs(pred_lu_1-(np.exp(-train_clumo_))), np.power(train_clumo_,-1))*100)
-    error3 = np.mean(np.multiply(abs(pred_lu_1-(np.exp(-test_clumo))), np.power(test_clumo,-1))*100)
+    error1 = np.mean(np.multiply(abs(pred_lu_1-(np.exp(-train_c_lumo))), np.power(np.exp(-train_c_lumo),-1))*100)
+    error2 = np.mean(np.multiply(abs(pred_lu_1-(np.exp(-train_clumo_))), np.power(np.exp(-train_clumo_),-1))*100)
+    error3 = np.mean(np.multiply(abs(pred_lu_1-(np.exp(-test_clumo))), np.power(np.exp(-test_clumo),-1))*100)
     print('Error of full data set: %5.3f %% \nError of training set with %d samples: %5.3f %% \nError of testing set with %d samples: %5.3f %% '\
           %(error1,len(train_lumo_),error2,len(test_lumo),error3))
