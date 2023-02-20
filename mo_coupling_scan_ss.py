@@ -53,28 +53,7 @@ for m in ss:
     print(len(new_homo_pairs))
 
     '''
-    4. remove zero values for full data set
-    '''
-    ihzero = []
-    for ii,i in np.ndenumerate(c_homo):
-        if i<=0.00000000:
-            ihzero.append(ii)
-            c_homo[ii] = 1e-9
-    print('Number of points to be deleted for homo:  ',len(ihzero))
-    homo_pairs  = np.delete(homo_pairs , ihzero, 0)
-    c_homo= np.delete(c_homo , ihzero, 0)
-
-    ilzero = []
-    for ii,i in np.ndenumerate(c_lumo):
-        if i<=0.00000000:
-            ilzero.append(ii)
-            c_lumo[ii] = 1e-9
-    print('Number of points to be deleted for lumo:  ',len(ilzero))
-    lumo_pairs  = np.delete(lumo_pairs , ilzero, 0)
-    c_lumo = np.delete(c_lumo , ilzero, 0)
-
-    '''
-    5. remove zero valuesfor selected data set
+    4. remove zero values for selected data set
     '''
     ihzero = []
     for ii,i in np.ndenumerate(new_c_homo):
@@ -95,7 +74,7 @@ for m in ss:
     new_c_lumo = np.delete(new_c_lumo , ilzero, 0)
 
     '''
-    6. build training set
+    5. build training set
     '''
     train_homo_pairs = new_homo_pairs[:]
     train_lumo_pairs = new_lumo_pairs[:]
@@ -120,7 +99,7 @@ for m in ss:
     print('Size of selected training set for lumo:   ',len(train_lumo_))
 
     '''
-    7. build testing set
+    6. build testing set
     '''
     iall = np.arange(len(train_c_homo))
     idiff = np.setdiff1d(iall,index)
@@ -133,7 +112,7 @@ for m in ss:
     test_clumo = np.delete(copy.deepcopy(train_clumo),idiff,0)
 
     '''
-    8. load model and train, test
+    7. load model and train, test
     ''' 
     setting = {'activation':'tanh','nn_shape':(256,256,256),'batch_size':len(train_homo_), 'training_steps':200000,\
     'learning_rate': 0.00008, 'decay_rate':0.95, 'decay_per_steps':1000, 'save_step':1000, 'drop_rate':0, 'save_path':'./trained_model/nat_dimer_homo_total_%d'%len(train_homo_),\
@@ -154,13 +133,13 @@ for m in ss:
     pred_lu_3 = np.exp(-NN_lu.model(test_lumo, training=False).numpy().reshape((len(test_lumo),)))
 
     error1 = np.mean(np.multiply(abs(pred_ho_1-(np.exp(-train_c_homo))), np.power(np.exp(-train_c_homo),-1))*100)
-    error2 = np.mean(np.multiply(abs(pred_ho_1-(np.exp(-train_chomo_))), np.power(np.exp(-train_chomo_),-1))*100)
-    error3 = np.mean(np.multiply(abs(pred_ho_1-(np.exp(-test_chomo))), np.power(np.exp(-test_chomo),-1))*100)
+    error2 = np.mean(np.multiply(abs(pred_ho_2-(np.exp(-train_chomo_))), np.power(np.exp(-train_chomo_),-1))*100)
+    error3 = np.mean(np.multiply(abs(pred_ho_3-(np.exp(-test_chomo))), np.power(np.exp(-test_chomo),-1))*100)
     print('Error of full data set: %5.3f %% \nError of training set with %d samples: %5.3f %% \nError of testing set with %d samples: %5.3f %% '\
           %(error1,len(train_homo_),error2,len(test_homo),error3))
 
     error1 = np.mean(np.multiply(abs(pred_lu_1-(np.exp(-train_c_lumo))), np.power(np.exp(-train_c_lumo),-1))*100)
-    error2 = np.mean(np.multiply(abs(pred_lu_1-(np.exp(-train_clumo_))), np.power(np.exp(-train_clumo_),-1))*100)
-    error3 = np.mean(np.multiply(abs(pred_lu_1-(np.exp(-test_clumo))), np.power(np.exp(-test_clumo),-1))*100)
+    error2 = np.mean(np.multiply(abs(pred_lu_2-(np.exp(-train_clumo_))), np.power(np.exp(-train_clumo_),-1))*100)
+    error3 = np.mean(np.multiply(abs(pred_lu_3-(np.exp(-test_clumo))), np.power(np.exp(-test_clumo),-1))*100)
     print('Error of full data set: %5.3f %% \nError of training set with %d samples: %5.3f %% \nError of testing set with %d samples: %5.3f %% '\
           %(error1,len(train_lumo_),error2,len(test_lumo),error3))
