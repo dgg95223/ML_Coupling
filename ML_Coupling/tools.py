@@ -1,0 +1,129 @@
+import numpy as np
+
+def read_xyz(filename, index=None, output='regular'):
+    '''
+    index: '-1' refers to the last geometry
+           'N' any integar larger than 0, refers to the N^th geometry, '-' refers to count the geometry in reversed order
+           '0' refers to all geometry
+    output mode: 'regular' output atom number, atom symbols, a np.array of coordinates
+                 'pyscf' output atom number, atom symbols, a string includes atom symbols and coordinates  
+    '''
+    with open(filename,'r') as xyz:
+        molecules = xyz.readlines()
+    
+    # clear unnecessary empty rows
+    reverse_i = list(range(0, len(molecules)))[::-1]
+    for i in reverse_i:
+        if molecules[i] == '\n':
+            if (len(molecules[i-1]) > 10) or (len(molecules[i-1]) == 1):
+                molecules.pop(i)
+
+    # get the number of atoms in each geometry
+    atoms_num = []
+    ii = 0
+    while ii < len(molecules) :
+        atoms_num.append(int(molecules[ii]))
+        ii += (2 + int(molecules[ii]))
+        if ii == len(molecules):
+            break
+
+    # get the amount of geometries
+    geoms_num = len(atoms_num)
+    atom_symbol = []
+    # get the symbol of atoms in each geometry
+    _atom_symbol = np.loadtxt(filename, usecols=0, dtype='str')
+    start = 1
+    for i in range(0, geoms_num):    
+        end = start + atoms_num[i]
+        atom_symbol.append(_atom_symbol[start:end])
+        start = end + 1
+
+    if index is None:                                                                                           
+        _index = -1  # read the last geometry as default
+    elif index == 0: # read all geometries
+        pass
+    elif index > 0: # read the N^th geometry
+        _index = index - 1
+    elif index <= -1:
+        _index = geoms_num + index 
+
+    if index == 0:
+        # read all geometries
+        geoms = []
+        for i in range(0, geoms_num):
+            if output == 'regular':
+                _geom = []
+                for j in range(0, atoms_num[i]):
+                    _geom_ = molecules[sum(np.add(atoms_num,2)[:i]) + 2 + j].split()[1:4]
+                    _geom.append(_geom_)
+                _geom =np.array(_geom, dtype=np.float64)
+            elif output == 'pyscf':
+                _geom = ''
+                for j in range(0, atoms_num[i]):
+                    _col = molecules[sum(np.add(atoms_num,2)[:i]) + 2 + j].split()[0:4]
+                    _geom_ = '%2s %12s %12s %12s\n'%(_col[0], _col[1], _col[2], _col[3])
+                    _geom += _geom_
+                    # _geom = ''.join(molecules[sum(np.add(atoms_num,2)[:i]) + 2: sum(np.add(atoms_num,2)[:i]) + 2 + atoms_num[i]])
+            geoms.append(_geom)
+    else: 
+        # index == 'N' read the N^th geometry
+        if output == 'regular':
+            _geom = []
+            for j in range(0, atoms_num[_index]):
+                _geom_ = molecules[sum(np.add(atoms_num,2)[:_index]) + 2 + j].split()
+                _geom.append(_geom_[1:4])
+            _geom =np.array(_geom, dtype=np.float64)
+        elif output == 'pyscf':
+            _geom = ''
+            for j in range(0, atoms_num[_index]):
+                _col = molecules[sum(np.add(atoms_num,2)[:_index]) + 2 + j].split()[0:4]
+                _geom_ = '%2s %12s %12s %12s\n'%(_col[0], _col[1], _col[2], _col[3])
+                _geom += _geom_
+            # _geom = ''.join(molecules[sum(np.add(atoms_num,2)[:_index]) + 2: sum(np.add(atoms_num,2)[:_index]) + 2 + atoms_num[_index]])
+        geoms = _geom
+        atoms_num = atoms_num[_index]
+        atom_symbol =atom_symbol[_index]
+    
+    return atoms_num, atom_symbol, geoms
+
+def check_close_mol(xyz1, xyz2):
+    '''
+    check if the two given molecule overlap/bonding with each other.
+    '''
+    vdw_r ={'ch':1, 'cc':1, 'hh':1, 'co':1, 'oh':1, 'cn':1, 'nh':1}
+    n_atom1, atom_sym1, mol1 = read_xyz(xyz1)
+    n_atom2, atom_sym2, mol2 = read_xyz(xyz2)
+    dist = []
+    for i in range(0, 3):            # make q_i - q_j along x, y, z axis where q is generalized coordinate
+        dist_ = np.power(np.log(np.outer(np.exp(mol1[:, i]), np.exp(-mol2[:, i]))),2)
+        dist.append(dist_)
+    ecu_dist = np.sqrt(np.add(np.add(dist[0], dist[1]), dist[2]))
+
+    bonds = []
+    for ii ,i in enumerate(atom_sym1):
+        for jj, j in enumerate(atom_sym2):
+            bonds.append(i+j)
+
+    for ii,i in enumerate(bonds):
+        if i.lower() == 'ch' or i.lower() =='hc':
+            bonds[ii] = 'ch'
+        elif i.lower() == 'co' or i.lower() == 'oc':
+            bonds[ii] = 'co'
+        elif i.lower() == 'oh' or i.lower() == 'ho':
+            bonds[ii] = 'oh'
+        elif i.lower() == 'cn' or i.lower() == 'nc':
+            bonds[ii] = 'cn'
+        elif i.lower() == 'nh' or i.lower() == 'hn':
+            bonds[ii] = 'nh'
+
+    bonds = np.array(bonds).reshape(ecu_dist.shape)
+    overlap_bond = False
+
+    for ii, i in enumerate(ecu_dist):
+        bond_type = bonds[ii]
+        if i < vdw_r[bond_type]:
+            overlap_bond = True
+            break
+        
+    return overlap_bond
+
