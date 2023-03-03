@@ -127,3 +127,44 @@ def check_close_mol(xyz1, xyz2):
         
     return overlap_bond
 
+def cal_dexter_coupling(output, n_state=4, E_t=0.0):
+    '''
+    calculate dexter coupling from the Q-Chem output file
+    the workiing equation is: V_DET = \sigma_{ij}(H_{Ii} * G_{ij} * H_{jF})
+                            where G_{ij} = E_t * (I-H)^{-1}_{ij}
+    H is the Hamiltonian matrix, ij are the indice for intermediate states,
+    E_t is the tunneling energy whcih is zero for two identical molecules
+    '''
+    with open(output,'r') as o:
+        out = o.readlines()
+    
+    for ii, i in enumerate(out):
+        if ' CDFT-CI Hamiltonian matrix in orthogonalized basis\n' in i:
+            H_str = ' '.join(out[ii+2 : ii+2+n_state]).split()
+    H = []
+    for i in H_str:
+        if len(i) > 12:
+            val_1 = i[0:-12]
+            val_2 = i[-12:]
+            if len(val_1) > 7:
+                H.append(val_1)
+            H.append(val_2)
+        else:
+            if len(i) > 7:
+                H.append(i)
+
+    H = np.array(H,dtype=np.float64).reshape((n_state,n_state))
+    H_dia_min = np.min(H.diagonal())
+    
+    H_br = H[1:n_state-1,1:n_state-1]
+    H_I_br = H[0,1:n_state-1]
+    H_br_F = H[1:n_state-1,-1]
+    
+    I_br = np.identity(n_state-2)
+    G_br = np.linalg.inv(E_t*I_br - (H_dia_min*I_br - H_br))
+
+    V_dex = np.einsum('i,ij,j->', H_I_br,G_br,H_br_F)
+
+    V_dex -= H[0,n_state-1]
+
+    return V_dex

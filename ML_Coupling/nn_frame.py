@@ -321,7 +321,7 @@ class MLP2(tf.keras.Model):
         return output
 
 class MLP_Dexter(tf.keras.Model):
-    '''2 * MO_pair 2 * (4,n,n) --> Dexter coupling(1,)'''
+    '''2 * MO_pair 2 * (2,n,n) --> Dexter coupling(1,)'''  # working model for dexter coupling
     def __init__(self, setting):
         super(MLP_Dexter, self).__init__()
         self.setting = setting
@@ -372,16 +372,17 @@ class MLP_Dexter(tf.keras.Model):
         # sub-net 1 input
         x1 = self.sub1_input1(inputs[:,0,0,:])
         x2 = self.sub1_input2(inputs[:,0,1,:])
-        x3 = self.sub1_input3(inputs[:,0,2,:])
-        x4 = self.sub1_input4(inputs[:,0,3,:])
+        # x3 = self.sub1_input3(inputs[:,0,2,:])
+        # x4 = self.sub1_input4(inputs[:,0,3,:])
         # sub-net 2 input
         x5 = self.sub2_input1(inputs[:,1,0,:])
         x6 = self.sub2_input2(inputs[:,1,1,:])
-        x7 = self.sub2_input3(inputs[:,1,2,:])
-        x8 = self.sub2_input4(inputs[:,1,3,:])
+        # x7 = self.sub2_input3(inputs[:,1,2,:])
+        # x8 = self.sub2_input4(inputs[:,1,3,:])
 
         # sub-net 1
-        X1 = self.sub1_concate([x1,x2,x3,x4])
+        X1 = self.sub1_concate([x1,x2])
+        # X1 = self.sub1_concate([x1,x2,x3,x4])
         X1 = self.sub1_dense1(X1 )  # hidden layer
         X1 = self.sub1_BN1(X1 )
         # X1 = self.sub1_dropout1(X1 )
@@ -394,7 +395,8 @@ class MLP_Dexter(tf.keras.Model):
         X1 = self.sub1_denseO(X1 )  # output layer
 
         # sub-net 2
-        X2 = self.sub2_concate([x5,x6,x7,x8])
+        X2 = self.sub2_concate([x5,x6])
+        # X2 = self.sub2_concate([x5,x6,x7,x8])
         X2 = self.sub2_dense1(X2 )  # hidden layer
         X2 = self.sub2_BN1(X2 )
         # X2 = self.sub2_dropout1(X2 )
@@ -415,8 +417,8 @@ class MLP_Dexter(tf.keras.Model):
 
         return output
 
-class _MLP(tf.keras.Model):  # baseline model
-    '''MO_pair (4,n,n) --> coupling(1,)'''
+class _MLP(tf.keras.Model):  # working model for electric coupling
+    '''MO_pair (2,n,n) --> coupling(1,)'''
     def __init__(self, setting):
         super(_MLP, self).__init__()
         self.setting = setting
