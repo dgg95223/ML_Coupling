@@ -187,7 +187,7 @@ class NN():
                 istep += 1        
             self.train_data_set, self.ndata_train = self.build_data_set(X, Y) # one epoch finished so refresh the data set to start a new epoch
 
-        self.model.save(self.save_path+'/model')
+        self.model.save(self.save_path+'/model',save_format='h5')
 
     def test(self, X, Y):
         # initialize test data set

@@ -98,5 +98,5 @@ pred = np.exp(-model(homo_pairs, training=False).numpy().reshape((len(homo_pairs
 
 print(np.mean(np.multiply(abs(np.log(pred)-np.log(c_homo)), np.power(-np.log(c_homo),-1))*100))
 error1 = np.mean(np.multiply(abs(pred-c_homo), np.power(c_homo,-1))*100)
-error2 = np.mean(abs(pred-c_homo)*1000)
+error2 = np.mean(abs(pred-c_homo)*27.2114*1000)
 print('MAPE: ',error1, '\nMAE(meV): ',error2)
