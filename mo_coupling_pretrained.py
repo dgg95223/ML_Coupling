@@ -5,32 +5,44 @@ import sys, copy
 subprocess.run('export TF_INTRA_OP_PARALLELISM_THREADS=52', shell=True)
 
 model_path = sys.argv[1]
-print(model_path)
-'''
-1. load mo_pair descriptor
-'''
-
-homo_pairs = np.load('./data/homo_homo_pair.npy')
-lumo_pairs = np.load('./data/lumo_lumo_pair.npy')
-homo_rot_pairs = np.load('./data/homo_pair_rot.npy')
-lumo_rot_pairs = np.load('./data/lumo_pair_rot.npy')
-
-homo_pairs_tr = np.concatenate((homo_pairs,homo_rot_pairs))
-lumo_pairs_tr = np.concatenate((lumo_pairs,lumo_rot_pairs))
+data_type = sys.argv[2]
 
 '''
-2. read coupling
+1&2. load couplings and mo_pair descriptor 
 '''
 raw_data = np.loadtxt('./data/results.csv', delimiter=',',comments='#')
-raw_data_rot = np.loadtxt('./data/results_rot.csv', delimiter=',',comments='#')
+raw_data_rot = np.loadtxt('./data/results_rot_ss_2.csv', delimiter=',',comments='#')
 c_homo = abs(raw_data[:,3])
 c_lumo = abs(raw_data[:,4])
 c_homo_rot = abs(raw_data_rot[:,3])
 c_lumo_rot = abs(raw_data_rot[:,4])
-
 c_homo_tr = np.concatenate((c_homo,c_homo_rot))
 c_lumo_tr = np.concatenate((c_lumo,c_lumo_rot))
 
+homo_pairs = np.load('./data/homo_homo_pair.npy')
+lumo_pairs = np.load('./data/lumo_lumo_pair.npy')
+homo_pairs_rot = np.load('./data/homo_pair_rot2.npy')
+lumo_pairs_rot = np.load('./data/lumo_pair_rot2.npy')
+homo_pairs_tr = np.concatenate((homo_pairs,homo_pairs_rot))
+lumo_pairs_tr = np.concatenate((lumo_pairs,lumo_pairs_rot))
+
+if data_type == 'trans':
+    homo_pairs = homo_pairs 
+    lumo_pairs = lumo_pairs
+    c_homo = c_homo
+    c_lumo = c_lumo
+elif data_type == 'rot':
+    homo_pairs = homo_pairs_rot
+    lumo_pairs = lumo_pairs_rot
+    c_homo = c_homo_rot
+    c_lumo = c_lumo_rot
+
+elif data_type == 'mix':
+     homo_pairs = homo_pairs_tr
+     lumo_pairs = lumo_pairs_tr
+     c_homo = c_homo_tr    
+     c_lumo = c_lumo_tr
+    
 '''
 3. remove zero values
 '''
@@ -44,22 +56,22 @@ homo_pairs  = np.delete(homo_pairs , ihzero, 0)
 c_homo  = np.delete(c_homo , ihzero, 0)
 
 ilzero = []
-for ii,i in np.ndenumerate(c_lumo_tr):
+for ii,i in np.ndenumerate(c_lumo):
     if i<=0.00000000:
         ilzero.append(ii)
-        c_lumo_tr[ii] = 1e-9
+        c_lumo[ii] = 1e-9
 print('Number of points to be deleted for lumo:  ',len(ilzero))
-lumo_pairs_tr  = np.delete(lumo_pairs_tr , ilzero, 0)
-c_lumo_tr  = np.delete(c_lumo_tr , ilzero, 0)
+lumo_pairs  = np.delete(lumo_pairs , ilzero, 0)
+c_lumo  = np.delete(c_lumo , ilzero, 0)
 
 '''
 4. build training set
 '''
 train_homo_pairs = homo_pairs[:]
-train_lumo_pairs = lumo_pairs_tr[:]
+train_lumo_pairs = lumo_pairs[:]
 
 train_c_homo = -np.log(c_homo)[:]
-train_c_lumo = -np.log(c_lumo_tr)[:]
+train_c_lumo = -np.log(c_lumo)[:]
 
 train_homo = copy.deepcopy(train_homo_pairs)
 train_chomo = copy.deepcopy(train_c_homo)
@@ -98,5 +110,5 @@ pred = np.exp(-model(homo_pairs, training=False).numpy().reshape((len(homo_pairs
 
 print(np.mean(np.multiply(abs(np.log(pred)-np.log(c_homo)), np.power(-np.log(c_homo),-1))*100))
 error1 = np.mean(np.multiply(abs(pred-c_homo), np.power(c_homo,-1))*100)
-error2 = np.mean(abs(pred-c_homo)*27.2114*1000)
+error2 = np.mean(abs(pred-c_homo)*1000*27.2114)
 print('MAPE: ',error1, '\nMAE(meV): ',error2)
