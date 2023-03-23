@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import subprocess
 import sys, copy
-subprocess.run('export TF_INTRA_OP_PARALLELISM_THREADS=52', shell=True)
+subprocess.run('export TF_INTRA_OP_PARALLELISM_THREADS=12', shell=True)
 
 model_path = sys.argv[1]
 data_type = sys.argv[2]
