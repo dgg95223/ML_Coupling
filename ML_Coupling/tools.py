@@ -90,7 +90,7 @@ def check_close_mol(xyz1, xyz2):
     '''
     check if the two given molecule overlap/bonding with each other.
     '''
-    vdw_r ={'ch':1, 'cc':1, 'hh':1, 'co':1, 'oh':1, 'cn':1, 'nh':1}
+    bond_r ={'ch':1.09, 'cc':1.54, 'hh':0.75, 'co':1.43, 'oh':0.98, 'cn':1.48, 'nh':1}
     n_atom1, atom_sym1, mol1 = read_xyz(xyz1)
     n_atom2, atom_sym2, mol2 = read_xyz(xyz2)
     dist = []
@@ -103,9 +103,13 @@ def check_close_mol(xyz1, xyz2):
     for ii ,i in enumerate(atom_sym1):
         for jj, j in enumerate(atom_sym2):
             bonds.append(i+j)
-
+            
     for ii,i in enumerate(bonds):
-        if i.lower() == 'ch' or i.lower() =='hc':
+        if i.lower() == 'cc':
+            bonds[ii] = 'cc'
+        elif i.lower() == 'hh':
+            bonds[ii] = 'hh'
+        elif i.lower() == 'ch' or i.lower() =='hc':
             bonds[ii] = 'ch'
         elif i.lower() == 'co' or i.lower() == 'oc':
             bonds[ii] = 'co'
@@ -119,10 +123,11 @@ def check_close_mol(xyz1, xyz2):
     bonds = np.array(bonds).reshape(ecu_dist.shape)
     overlap_bond = False
 
-    for ii, i in enumerate(ecu_dist):
+    for ii, i in np.ndenumerate(ecu_dist):
         bond_type = bonds[ii]
-        if i < vdw_r[bond_type]:
+        if i < bond_r[bond_type]:
             overlap_bond = True
+            print(ii,i)
             break
         
     return overlap_bond
