@@ -90,7 +90,7 @@ def check_close_mol(xyz1, xyz2):
     '''
     check if the two given molecule overlap/bonding with each other.
     '''
-    bond_r ={'ch':1.09, 'cc':1.54, 'hh':0.75, 'co':1.43, 'oh':0.98, 'cn':1.48, 'nh':1}
+    bond_r ={'ch':2.9, 'cc':3.4, 'hh':2.4, 'co':3.22, 'oh':2.72, 'cn':3.25, 'nh':2.75}
     n_atom1, atom_sym1, mol1 = read_xyz(xyz1)
     n_atom2, atom_sym2, mol2 = read_xyz(xyz2)
     dist = []
@@ -127,7 +127,7 @@ def check_close_mol(xyz1, xyz2):
         bond_type = bonds[ii]
         if i < bond_r[bond_type]:
             overlap_bond = True
-            print(ii,i)
+            print(ii,i,bond_type)
             break
         
     return overlap_bond
