@@ -86,13 +86,16 @@ def read_xyz(filename, index=None, output='regular'):
     
     return atoms_num, atom_symbol, geoms
 
-def check_close_mol(xyz1, xyz2):
+def check_close_mol(mol1=None, mol2=None, atom_sym1=None, atom_sym2=None, xyz1=None, xyz2=None):
     '''
     check if the two given molecule overlap/bonding with each other.
     '''
     bond_r ={'ch':2.9, 'cc':3.4, 'hh':2.4, 'co':3.22, 'oh':2.72, 'cn':3.25, 'nh':2.75}
-    n_atom1, atom_sym1, mol1 = read_xyz(xyz1)
-    n_atom2, atom_sym2, mol2 = read_xyz(xyz2)
+    if (mol1 is None) and (mol2 is None):
+        n_atom1, atom_sym1, mol1 = read_xyz(xyz1)
+        n_atom2, atom_sym2, mol2 = read_xyz(xyz2)
+    elif (xyz1 is None) and (xyz2 is None):
+        pass
     dist = []
     for i in range(0, 3):            # make q_i - q_j along x, y, z axis where q is generalized coordinate
         dist_ = np.power(np.log(np.outer(np.exp(mol1[:, i]), np.exp(-mol2[:, i]))),2)
@@ -127,7 +130,7 @@ def check_close_mol(xyz1, xyz2):
         bond_type = bonds[ii]
         if i < bond_r[bond_type]:
             overlap_bond = True
-            print(ii,i,bond_type)
+            # print(ii,i,bond_type)
             break
         
     return overlap_bond
