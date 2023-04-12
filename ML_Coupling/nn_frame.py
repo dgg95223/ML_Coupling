@@ -104,8 +104,9 @@ class NN():
 
     def build_data_set(self, X, Y):
         # load data from np.array
-        data_set = tf.data.Dataset.from_tensor_slices((X,Y)).shuffle(self.batch_size).batch(self.batch_size)
         ndata = len(X)
+        data_set = tf.data.Dataset.from_tensor_slices((X,Y)).shuffle(ndata).batch(self.batch_size)
+        
         return data_set, ndata
 
     def loss_function(self):
