@@ -1,0 +1,278 @@
+Number of points to be deleted for homo:   1777
+Number of points to be deleted for lumo:   1611
+Size of full training set for homo:    67144
+Size of selected training set for homo:    6715
+Size of full training set for lumo:    67310
+Size of selected training set for lumo:    6731
+training step:     0
+training step:  1000
+training step:  2000
+training step:  3000
+training step:  4000
+training step:  5000
+training step:  6000
+training step:  7000
+training step:  8000
+training step:  9000
+training step: 10000
+training step: 11000
+training step: 12000
+training step: 13000
+training step: 14000
+training step: 15000
+training step: 16000
+training step: 17000
+training step: 18000
+training step: 19000
+training step: 20000
+training step: 21000
+training step: 22000
+training step: 23000
+training step: 24000
+training step: 25000
+training step: 26000
+training step: 27000
+training step: 28000
+training step: 29000
+training step: 30000
+training step: 31000
+training step: 32000
+training step: 33000
+training step: 34000
+training step: 35000
+training step: 36000
+training step: 37000
+training step: 38000
+training step: 39000
+training step: 40000
+training step: 41000
+training step: 42000
+training step: 43000
+training step: 44000
+training step: 45000
+training step: 46000
+training step: 47000
+training step: 48000
+training step: 49000
+training step: 50000
+training step: 51000
+training step: 52000
+training step: 53000
+training step: 54000
+training step: 55000
+training step: 56000
+training step: 57000
+training step: 58000
+training step: 59000
+training step: 60000
+training step: 61000
+training step: 62000
+training step: 63000
+training step: 64000
+training step: 65000
+training step: 66000
+training step: 67000
+training step: 68000
+training step: 69000
+training step: 70000
+training step: 71000
+training step: 72000
+training step: 73000
+training step: 74000
+training step: 75000
+training step: 76000
+training step: 77000
+training step: 78000
+training step: 79000
+./trained_model2/trans/nat_dimer_homo_trans_6715
+MAPE of full data set: 3.634 % 
+MAPE of training set with 6715 samples: 1.291 % 
+MAPE of testing set with 60429 samples: 3.895 % 
+
+MAE(meV) of training set with 6715 samples: 0.522  
+MAE(meV) of testing set with 60429 samples: 0.685 
+
+Size of full training set for homo:    67144
+Size of selected training set for homo:    33572
+Size of full training set for lumo:    67310
+Size of selected training set for lumo:    33655
+training step:     0
+training step:  1000
+training step:  2000
+training step:  3000
+training step:  4000
+training step:  5000
+training step:  6000
+training step:  7000
+training step:  8000
+training step:  9000
+training step: 10000
+training step: 11000
+training step: 12000
+training step: 13000
+training step: 14000
+training step: 15000
+training step: 16000
+training step: 17000
+training step: 18000
+training step: 19000
+training step: 20000
+training step: 21000
+training step: 22000
+training step: 23000
+training step: 24000
+training step: 25000
+training step: 26000
+training step: 27000
+training step: 28000
+training step: 29000
+training step: 30000
+training step: 31000
+training step: 32000
+training step: 33000
+training step: 34000
+training step: 35000
+training step: 36000
+training step: 37000
+training step: 38000
+training step: 39000
+training step: 40000
+training step: 41000
+training step: 42000
+training step: 43000
+training step: 44000
+training step: 45000
+training step: 46000
+training step: 47000
+training step: 48000
+training step: 49000
+training step: 50000
+training step: 51000
+training step: 52000
+training step: 53000
+training step: 54000
+training step: 55000
+training step: 56000
+training step: 57000
+training step: 58000
+training step: 59000
+training step: 60000
+training step: 61000
+training step: 62000
+training step: 63000
+training step: 64000
+training step: 65000
+training step: 66000
+training step: 67000
+training step: 68000
+training step: 69000
+training step: 70000
+training step: 71000
+training step: 72000
+training step: 73000
+training step: 74000
+training step: 75000
+training step: 76000
+training step: 77000
+training step: 78000
+training step: 79000
+./trained_model2/trans/nat_dimer_homo_trans_33572
+MAPE of full data set: 0.676 % 
+MAPE of training set with 33572 samples: 0.330 % 
+MAPE of testing set with 33572 samples: 1.022 % 
+
+MAE(meV) of training set with 33572 samples: 0.104  
+MAE(meV) of testing set with 33572 samples: 0.159 
+
+Size of full training set for homo:    67144
+Size of selected training set for homo:    60430
+Size of full training set for lumo:    67310
+Size of selected training set for lumo:    60579
+training step:     0
+training step:  1000
+training step:  2000
+training step:  3000
+training step:  4000
+training step:  5000
+training step:  6000
+training step:  7000
+training step:  8000
+training step:  9000
+training step: 10000
+training step: 11000
+training step: 12000
+training step: 13000
+training step: 14000
+training step: 15000
+training step: 16000
+training step: 17000
+training step: 18000
+training step: 19000
+training step: 20000
+training step: 21000
+training step: 22000
+training step: 23000
+training step: 24000
+training step: 25000
+training step: 26000
+training step: 27000
+training step: 28000
+training step: 29000
+training step: 30000
+training step: 31000
+training step: 32000
+training step: 33000
+training step: 34000
+training step: 35000
+training step: 36000
+training step: 37000
+training step: 38000
+training step: 39000
+training step: 40000
+training step: 41000
+training step: 42000
+training step: 43000
+training step: 44000
+training step: 45000
+training step: 46000
+training step: 47000
+training step: 48000
+training step: 49000
+training step: 50000
+training step: 51000
+training step: 52000
+training step: 53000
+training step: 54000
+training step: 55000
+training step: 56000
+training step: 57000
+training step: 58000
+training step: 59000
+training step: 60000
+training step: 61000
+training step: 62000
+training step: 63000
+training step: 64000
+training step: 65000
+training step: 66000
+training step: 67000
+training step: 68000
+training step: 69000
+training step: 70000
+training step: 71000
+training step: 72000
+training step: 73000
+training step: 74000
+training step: 75000
+training step: 76000
+training step: 77000
+training step: 78000
+training step: 79000
+./trained_model2/trans/nat_dimer_homo_trans_60430
+MAPE of full data set: 0.400 % 
+MAPE of training set with 60430 samples: 0.348 % 
+MAPE of testing set with 6714 samples: 0.864 % 
+
+MAE(meV) of training set with 60430 samples: 0.117  
+MAE(meV) of testing set with 6714 samples: 0.159 
+
