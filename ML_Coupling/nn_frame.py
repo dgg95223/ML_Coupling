@@ -148,6 +148,7 @@ class NN():
         self.optimizer = tf.keras.optimizers.Adam()
 
         istep = 0
+        iepoch = 0
         while istep < self.training_steps:
             for X_, Y_ in self.train_data_set:
                 if istep < self.training_steps:
@@ -187,6 +188,9 @@ class NN():
                     break
                 istep += 1        
             self.train_data_set, self.ndata_train = self.build_data_set(X, Y) # one epoch finished so refresh the data set to start a new epoch
+            iepoch += 1
+            loss = tf.keras.losses.MeanAbsoluteError()
+            print('Epoch of ',iepoch, 'loss: ',loss(Y,self.model(X, training=False)).numpy())
 
         self.model.save(self.save_path+'/model')
 
@@ -331,8 +335,8 @@ class MLP_Dexter(tf.keras.Model):
         # sub-net 1
         self.sub1_input1    = tf.keras.layers.Flatten()
         self.sub1_input2    = tf.keras.layers.Flatten()
-        self.sub1_input3    = tf.keras.layers.Flatten()
-        self.sub1_input4    = tf.keras.layers.Flatten()
+        # self.sub1_input3    = tf.keras.layers.Flatten()
+        #self.sub1_input4    = tf.keras.layers.Flatten()
         self.sub1_concate   = tf.keras.layers.Concatenate()
         self.sub1_BN1       = tf.keras.layers.BatchNormalization()
         self.sub1_BN2       = tf.keras.layers.BatchNormalization()
@@ -349,8 +353,8 @@ class MLP_Dexter(tf.keras.Model):
         # sub-net 2
         self.sub2_input1    = tf.keras.layers.Flatten()
         self.sub2_input2    = tf.keras.layers.Flatten()
-        self.sub2_input3    = tf.keras.layers.Flatten()
-        self.sub2_input4    = tf.keras.layers.Flatten()
+        # self.sub2_input3    = tf.keras.layers.Flatten()
+        # self.sub2_input4    = tf.keras.layers.Flatten()
         self.sub2_concate   = tf.keras.layers.Concatenate()
         self.sub2_BN1       = tf.keras.layers.BatchNormalization()
         self.sub2_BN2       = tf.keras.layers.BatchNormalization()

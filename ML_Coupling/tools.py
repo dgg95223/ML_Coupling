@@ -90,7 +90,8 @@ def check_close_mol(mol1=None, mol2=None, atom_sym1=None, atom_sym2=None, xyz1=N
     '''
     check if the two given molecule overlap/bonding with each other.
     '''
-    bond_r ={'ch':2.9, 'cc':3.4, 'hh':2.4, 'co':3.22, 'oh':2.72, 'cn':3.25, 'nh':2.75}
+#    bond_r ={'ch':2.9, 'cc':3.4, 'hh':2.4, 'co':3.22, 'oh':2.72, 'cn':3.25, 'nh':2.75}
+    bond_r ={'ch':1.09, 'cc':1.54, 'hh':0.74, 'co':1.43, 'oh':0.96, 'cn':1.47, 'nh':1.01}
     if (mol1 is None) and (mol2 is None):
         n_atom1, atom_sym1, mol1 = read_xyz(xyz1)
         n_atom2, atom_sym2, mol2 = read_xyz(xyz2)
@@ -128,7 +129,7 @@ def check_close_mol(mol1=None, mol2=None, atom_sym1=None, atom_sym2=None, xyz1=N
 
     for ii, i in np.ndenumerate(ecu_dist):
         bond_type = bonds[ii]
-        if i < bond_r[bond_type]:
+        if i < bond_r[bond_type]*1.5:
             overlap_bond = True
             # print(ii,i,bond_type)
             break
@@ -174,5 +175,47 @@ def cal_dexter_coupling(output, n_state=4, E_t=0.0):
     V_dex = np.einsum('i,ij,j->', H_I_br,G_br,H_br_F)
 
     V_dex -= H[0,n_state-1]
+    if H_dia_min in H_br.diagonal():
+        V_dex = 0.0
 
     return V_dex
+
+def get_gaussian_opt_geom(file_path):
+    igeom = []
+    with open(file_path, 'r') as f:
+        output = f.readlines()
+    for ii, i in enumerate(output):
+        if 'NAtoms' in i:
+            n_atom = int(i.split()[1])
+        if 'Standard orientation' in i:
+            igeom.append(ii+5)
+    ilast_start = igeom[-1]
+    ilast_end   = ilast_start + n_atom
+    last_geom = []
+    atom_sym = []
+    for i in range(ilast_start, ilast_end):
+        last_geom.append(output[i].split()[3:])
+        atom_sym.append(output[i].split()[1])
+    geom     = last_geom
+    return n_atom,atom_sym,np.array(geom,dtype=np.float64)
+
+def get_qchem_cdft_energies(file_path, n_job=3):
+    energies =  np.zeros(n_job)
+    ijob = -1
+    with open(file_path, 'r') as f:
+        output = f.readlines()
+    while ijob < n_job-1:
+        for ii, i in enumerate(output):
+            if 'of %d'%n_job in i:
+                ijob += 1
+            if 'Total energy in the final basis' in i:
+                energies[ijob] = i.split()[-1]
+            elif 'SCF failed' in i:
+                energies[ijob] = '0'
+    return energies
+
+def print2dm(mat):
+    m_shape = mat.shape
+    for i in range(0,m_shape[0]):
+        row = ' '.join(['%12.8f'%j for j in mat[i]])
+        print(row)

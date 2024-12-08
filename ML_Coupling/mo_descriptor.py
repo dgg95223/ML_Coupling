@@ -1,5 +1,7 @@
-import numpy as np
 from ML_Coupling.cube2ovlp import load_cube, load_dat
+import numpy as np
+
+BOHR = 0.52917721092
 
 class MO_descriptor():
     def __init__(self, cube_file):
@@ -9,7 +11,7 @@ class MO_descriptor():
         self.cube_file  = cube_file
 
     def get_center(self, mo):
-        '''return the indices of the center of the given matrix/tensor'''
+        '''return the index of the center of the given matrix/tensor'''
         sum_qv = np.zeros(mo.ndim)
         sum_v = np.zeros(mo.ndim)
         qc = np.zeros(mo.ndim)
@@ -24,15 +26,15 @@ class MO_descriptor():
         return qc
 
     def get_center_(self, imo, mo):
-        '''return the indices of the center of a list of indices of a maatrix/tensor'''
+        '''return the indices of the center of a list of indices of a matrix/tensor'''
         icoord = imo
         values = mo
 
-        sum_qv = np.zeros(len(icoord[0]))
-        sum_v  = np.zeros(len(icoord[0]))
+        sum_qv = np.zeros(len(icoord[0])) # 1 * 3 vecter
+        sum_v  = np.zeros(len(icoord[0])) 
         qc     = np.zeros(len(icoord[0]))
 
-        for i in icoord:
+        for i in icoord: 
             for j in range(0, len(icoord[0])):
                 sum_qv[j] += i[j] * values[i]
                 sum_v[j] += values[i]
@@ -40,9 +42,9 @@ class MO_descriptor():
         for k in range(0, len(sum_v)):
             qc[k] = sum_qv[k] / sum_v[k]
 
-        return np.round(qc)
+        return qc  # maybe should remove np.round() --10/18/2023
 
-    def get_cluster(self, imo): 
+    def get_lobe(self, imo): 
         return self.get_dbscan_cluster(imo)
 
     def get_dbscan_cluster(self, imo_):
@@ -64,19 +66,39 @@ class MO_descriptor():
             print('noise found during clustering process, clustering parameter should be modified.')
 
         return n_cluster, icluster
+    
+    def ecu_dist2(self, coord1, coord2):
+        ''' Sqare of Ecu distance'''
+        dist = 0
+        for i in range(0, len(coord1)):
+            dist += np.power((coord1[i] - coord2[i]) * self.dq[i,i],2) 
+            # print('ecu: ', dist)
+            
+        return dist        
 
-    def int_grids_cluster(self, imo, mo):
+    def int_grids_lobe(self, imo, mo):
         icoord = imo
         
-        n_cluster = len(imo)
-        int_values =  np.zeros(n_cluster)
+        n_lobe = len(imo)
+        int_values =  np.zeros(n_lobe)
         for ii, i in np.ndenumerate(icoord):
             for j in i:
                 int_values[ii] += mo[j]
         
         return int_values
+    
+    def cal_r2_lobe(self, imo, mo, center):
+        icoord = imo
 
-    def preprocess_mo(self, mo, thresh=1e-5):
+        n_lobe = len(imo)
+        r2_lobes = np.zeros(n_lobe)
+        for ii, i in np.ndenumerate(icoord):
+            for j in i:
+                r2_lobes[ii] += mo[j] * abs(mo[j]) * self.ecu_dist2(j, center[ii[0]])
+                
+        return r2_lobes
+
+    def preprocess_mo(self, mo, thresh=1e-4):
         '''separate the mo to 2 parts, positive part and negative part'''
         positive = []
         negative = []
@@ -88,67 +110,76 @@ class MO_descriptor():
 
         return positive, negative  # [(ix,iy,iz)] : n * 3 array
 
-    def make(self):
+    def make(self,c_type='int',unit='bohr'):
         '''
         mo:                                  nx * ny * nz, number of grids along each axis
         imo_plus, imo_minus:                 n_grids * n_dim array, indices of mo
-        n_cluster:                           int, number of clusters
-        icluster_plus, icluster_minus:       1 * n_grids array, indices of cluster
-        cluster_plus, cluster_minus:         n_cluster * n_grids_cluster * n_dim, array, n_grids_cluster is not a fixed number, indices of values in mo tensor and values
-        cneter_plus, center_minus:           n_cluster * n_dim, weighthed cneter of cluster
+        n_lobe:                              int, number of lobes
+        ilobe_plus, ilobe_minus:             1 * n_grids array, indices of lobe
+        lobe_plus, lobe_minus:               n_lobe * n_grids_lobe * n_dim, array, n_grids_lobe is not a fixed number, indices of values in mo tensor and values
+        cneter_plus, center_minus:           n_lobe * n_dim, weighthed cneter of lobe, in a.u.
         '''
         # load mo form cube file and preprocess it to positive and negative part
         cube_file = self.cube_file
         if cube_file.split('.')[-1] == 'cube':
-            nq, dq, mo = load_cube(cube_file)
+            self.nq, self.dq, self.mo = load_cube(cube_file)
             
         elif cube_file.split('.')[-1] == 'dat':
-            nq, dq, mo = load_dat(cube_file)
-        imo_plus, imo_minus = self.preprocess_mo(mo)  
-        self.mo = mo
+            self.nq, self.dq, self.mo = load_dat(cube_file)
+        imo_plus, imo_minus = self.preprocess_mo(self.mo)  
 
         # clustering
         print('1 start clustering')
-        n_cluster_plus, icluster_plus = self.get_cluster(imo_plus)
-        n_cluster_minus, icluster_minus =self.get_cluster(imo_minus)
+        n_lobe_plus, ilobe_plus = self.get_lobe(imo_plus)
+        n_lobe_minus, ilobe_minus =self.get_lobe(imo_minus)
 
-        cluster_plus= []
-        cluster_minus = []
-        for i in range(0, n_cluster_plus):
-            cluster = []
-            for jj, j in enumerate(icluster_plus):
+        lobe_plus= []
+        lobe_minus = []
+        for i in range(0, n_lobe_plus):
+            lobe = []
+            for jj, j in enumerate(ilobe_plus):
                 if j == i:
-                    cluster.append(imo_plus[jj])
-            cluster_plus.append(cluster)
+                    lobe.append(imo_plus[jj])
+            lobe_plus.append(lobe)
 
-        for i in range(0, n_cluster_minus):
-            cluster = []
-            for jj, j in enumerate(icluster_minus):
+        for i in range(0, n_lobe_minus):
+            lobe = []
+            for jj, j in enumerate(ilobe_minus):
                 if j == i:
-                    cluster.append(imo_minus[jj])
-            cluster_minus.append(cluster)
+                    lobe.append(imo_minus[jj])
+            lobe_minus.append(lobe)
 
         # get the center of each cluster
         print('2 start getting center')
         center_plus = []
         center_minus = []
 
-        for i in range(0, n_cluster_plus):
-            center_plus.append(self.get_center_(cluster_plus[i], mo))
-        for i in range(0, n_cluster_minus):
-            center_minus.append(self.get_center_(cluster_minus[i], mo))
+        for i in range(0, n_lobe_plus):
+            center_plus.append(self.get_center_(lobe_plus[i], self.mo))
+        for i in range(0, n_lobe_minus):
+            center_minus.append(self.get_center_(lobe_minus[i], self.mo))
             
-        # integrate values on all grids of each cluster
-        int_plus = self.int_grids_cluster(cluster_plus, mo)
-        int_minus = self.int_grids_cluster(cluster_minus, mo)
+        if c_type == 'int':
+            amp_plus = self.int_grids_lobe(lobe_plus, self.mo)
+            amp_minus = self.int_grids_lobe(lobe_minus, self.mo)
+        elif c_type == 'r2':
+            amp_plus = self.cal_r2_lobe(lobe_plus, self.mo, center_plus)
+            amp_minus = self.cal_r2_lobe(lobe_minus, self.mo, center_minus)
+        # integrate values on all grids of each lobe
+        
 
-        int, center = np.multiply((int_plus, int_minus),dq[0,0]**3), np.multiply((center_plus, center_minus), dq[0,0])
+        amp, center = np.multiply((amp_plus, amp_minus),self.dq[0,0]**3), np.multiply((center_plus, center_minus), self.dq[0,0])
         mo_ = np.zeros((center.shape[1]*2, 4))
-        int = int.flatten()
-        center = center.reshape((center.shape[1]*2, 3))
+        amp = amp.flatten()
+        center = center.reshape((center.shape[1]*2, 3))   # the unit of coordinates is a.u.
 
-        for ii, i in enumerate(int):
-            mo_[ii] = np.append(int[ii], center[ii])
+        if unit == 'bohr':
+            pass
+        elif unit =='ang':
+            center = np.multiply(center,BOHR)
+
+        for ii, i in enumerate(amp):
+            mo_[ii] = np.append(amp[ii], center[ii])
         
         return mo_
 
@@ -176,9 +207,5 @@ class MO_pair_descriptor():
         ecu_dist = np.sqrt(np.add(np.add(dist[0], dist[1]), dist[2]))
         mo_pair[1] = ecu_dist
 
-            
-
-
         return mo_pair
-
 
