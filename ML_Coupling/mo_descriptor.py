@@ -98,7 +98,7 @@ class MO_descriptor():
                 
         return r2_lobes
 
-    def preprocess_mo(self, mo, thresh=1e-4):
+    def preprocess_mo(self, mo, thresh=1e-5):
         '''separate the mo to 2 parts, positive part and negative part'''
         positive = []
         negative = []
